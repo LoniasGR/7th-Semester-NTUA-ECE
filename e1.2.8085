@@ -1,0 +1,52 @@
+IN 10H
+MAIN:
+LDA 2000H
+ANI F0H   ; 4MSBs
+RLC
+RLC
+RLC
+RLC
+INR A     ; we want (4msb)+1 reps
+MOV E,A   ; store number of repetitions
+
+FLASH:
+CALL ON1
+CALL OFF1
+JMP DECISION
+
+ON1:
+MVI A,00H
+STA 3000H
+LDA 2000H
+ANI 0FH
+MOV C,A   ; x
+INR C     ; desired delay / 100
+MVI D,64H ; D=100D
+D1:
+CALL DELB
+DCR D
+JNZ D1    ; repeat 100 times the (x+1)ms-delay
+RET
+
+OFF1:
+MVI A,FFH
+STA 3000H
+LDA 2000H
+ANI 0FH
+MOV C,A   ; x
+INR C     ; desired delay / 100
+MVI D,64H ; D=100D
+D2:
+CALL DELB
+DCR D
+JNZ D2    ; repeat 100 times the (x+1)ms-delay
+RET
+
+DECISION:
+DCR E
+JZ ENDD
+JMP FLASH
+
+ENDD:
+JMP MAIN
+END
