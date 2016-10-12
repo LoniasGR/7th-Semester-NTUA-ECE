@@ -1,0 +1,55 @@
+IN 10H
+MVI B,03H  ; 03E8H = 1000D
+MVI C,E8H  ;
+MVI D,00H  ; D : COUNTER
+MVI E,00H  ; E : UP = 00 / DOWN = 01
+
+MAIN:
+LDA 2000H	; 
+ANI 80H	;If MSB is 0 do nothing
+CPI 80H	;
+JNZ MAIN	;
+
+LED_PHASE:
+LDA 2000H	;
+ANI 0FH	; if Limit < counter go to LAST
+CMP D		;
+JC LAST
+MOV A,D
+CMA 
+STA 3000H
+CALL DELB
+MOV A,E
+CPI 00H
+JZ UP
+CPI 01H
+JZ DOWN
+
+UP: 
+INR D
+JMP LAST
+
+DOWN:
+DCR D
+JMP LAST
+
+LAST:
+MOV A,D
+CPI 00H
+JZ ZERO
+LDA 2000H
+ANI 0FH
+CMP D         ; if limit >= counter then 
+JNC MAIN      ; continue 
+CMP D         ; just in case
+JZ MAIN
+DCR D
+DCR D 
+MVI E,01H     ; count downwards
+JMP MAIN
+
+ZERO:
+MVI E,00H	; if counter = 0, count 
+JMP MAIN	; upwards
+HLT		
+END
