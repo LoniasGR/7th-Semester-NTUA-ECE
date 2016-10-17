@@ -1,0 +1,112 @@
+;99 = 63H
+;-99 = E3H
+
+
+MAIN:
+LDA 2000H
+CPI E3H
+JZ FIND_NEG_NUMBER ; if INPUT == -99 go to find negative number
+JNC LOW ; if INPUT< - 99 print LOW
+CPI 80H
+JNC FIND_NEG_NUMBER ;if INPUT > -00 go to find negative number
+CPI 63H
+JZ FIND_NUMBER ;if INPUT == 99 go to find number
+JNC HIGH ;if INPUT > 99 print HI
+JMP FIND_NUMBER ;if INPUT < 99 go to find number
+HLT
+
+HIGH:
+MVI B,02H 
+MVI C,89H 
+CALL DISP
+MVI B,01H
+MVI C,F9H
+CALL DISP
+JMP MAIN
+
+LOW:
+MVI B,04H
+MVI C,BFH
+CALL DISP
+MVI B,02H
+MVI C,C7H
+CALL DISP
+MVI B,01H
+MVI C,C0H
+CALL DISP
+JMP MAIN
+
+FIND_NEG_NUMBER:
+;if number = neg print the (-) and go to find number 
+MOV D,A
+MVI B,04H
+MVI C,BFH
+CALL DISP
+MOV A,D
+ANI 7FH
+JMP FIND_NUMBER
+
+FIND_NUMBER:
+;while number >= 10: number = number - 10
+;E is the tenths
+;D is the rest of the number 
+MOV D,A
+MVI E,00H
+CPI 0AH
+JC PRINT_NUMBER
+
+FIND_TENTHS:
+SUI 0AH
+INR E
+CPI 0AH
+JC PRINT_NUMBER
+JMP FIND_TENTHS
+
+PRINT_NUMBER:
+;the array in memory positon 0900H holds the 7-seg value for 
+;numbers 0 - 9
+;so we just load  H <- 09H and to L <- A , while 0<A<9 and find the
+;corresponding value. This is done twice. Once for thenths and once 
+;for the rest. 
+MOV D,A
+MOV A,E
+MVI H,09H
+MOV L,A
+MOV A,M
+MVI B,02H
+MOV C,A
+CALL DISP
+MOV A,D
+MVI H,09H
+MOV L,A
+MOV A,M
+MVI B,01H
+MOV C,A
+CALL DISP
+JMP MAIN
+
+
+DISP: 
+;DISP takes the position on whci 7-seg to put the number in reg B 
+;and the leds to light up on reg C (reverse logic)
+MVI A,FFH
+STA 3800H
+MOV A,B
+STA 2800H
+MOV A,C
+STA 3800H
+RET
+
+ORG 0900H 
+DB C0H ;0
+DB F9H ;1
+DB A4H ;2
+DB B0H ;3
+DB 99H ;4
+DB 92H ;5
+DB 82H ;6
+DB F8H ;7
+DB 80H ;8
+DB 90H ;9
+
+END
