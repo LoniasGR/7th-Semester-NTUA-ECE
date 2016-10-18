@@ -4,19 +4,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
 #define MAX_READ 100
 #define FILEPERMS S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define WRITEPERMS O_WRONLY | O_CREAT | O_TRUNC
 
 void check_input_files_number (int argc)
 {
-    if (argc < 3) { 
-        printf("Usage: ./fconc infile1 infile2 [outfile (default: focnc.out)]\n");
-        exit(EXIT_FAILURE);
-    }
-    else if (argc > 4) {
-       printf("Usage: ./fconc infile1 infile2 [outfile (default: focnc.out)]\n");
+    if (argc < 3) {
+        printf("Usage: ./fconc infile1 [infile2 infile3 ..] outfile\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -34,26 +29,14 @@ int open_input_file (char *FileName)
 
 int open_output_file (int argc, char **argv)
 {
-    
-    if (argc == 4) {
-        int outFile = open(argv[3], WRITEPERMS, FILEPERMS);
+        int outFile = open(argv[argc - 1], WRITEPERMS, FILEPERMS);
         if (outFile == -1) {
-            perror(argv[3]);
+            perror(argv[argc - 1]);
             close(outFile);
             exit(EXIT_FAILURE);
         }
         else 
-            return outFile;
-    }
-    else {
-        int outFile = open("fconc.out", WRITEPERMS, FILEPERMS);
-        if (outFile == -1) {
-            perror("fconc.out");
-            exit(EXIT_FAILURE);
-        }
-        else
-            return outFile;
-    }        
+            return outFile;         
 }
 
 void closeFile (int File, char *inFileName)
@@ -105,8 +88,8 @@ int main (int argc, char **argv)
     check_input_files_number(argc);
     int outFile;
     outFile = open_output_file(argc, argv);
-    write_file(outFile,argv[1]);
-    write_file(outFile,argv[2]);
-    closeFile(outFile, argv[3]);
+    for (int i=1;i <= argc - 2;i++)
+        write_file(outFile, argv[i]);
+    closeFile(outFile, argv[argc - 1]);
     return 0;
 }
