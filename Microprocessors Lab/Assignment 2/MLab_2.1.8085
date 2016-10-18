@@ -1,7 +1,7 @@
 IN 10H
 
-MVI B,00H ;B and C are 0032H = 50D
-MVI C,32H ;
+MVI B,01H ;B and C are 0032H = 50D
+MVI C,F4H ;
 
 MVI D,00H ;D is the posiotion of the train on the LEDs
 
