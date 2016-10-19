@@ -1,6 +1,6 @@
 IN 10H
 
-MVI B,01H ;B and C are 0032H = 50D
+MVI B,01H ;B and C are 01F4H = 500D
 MVI C,F4H ;
 
 MVI D,00H ;D is the posiotion of the train on the LEDs
@@ -35,7 +35,7 @@ MOV A,E
 CPI 00H
 JZ LEFT
 CPI 01H
-JZ MAIN
+JZ LED_ON
 CPI 02H
 JZ RIGHT
 CPI 03H
