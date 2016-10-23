@@ -6,9 +6,9 @@ Zing: main.o zing.o
 Zing2: main.o zing2.o
 	gcc main.o zing2.o -o Zing2
 
-main.o:  zing.h
+main.o: zing.h 
 zing2.o: zing2.c
 
 .PHONY: clean
 clean:
-	-rm  Zing Zing2 main.o zing2.o
+	-rm  -f Zing Zing2 main.o zing2.o
