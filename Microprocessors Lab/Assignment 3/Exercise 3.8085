@@ -33,9 +33,8 @@ START_3.5:
 CPI 85H      ; reset the display
 JZ START_2
 MOV A,B      ; if B gets to 0 all digits are in display
-CPI 00H
-JZ START_4
-DCR B	      ; if not all digits are in display continue
+CPI FFH
+JZ START_4	      ; if not all digits are in display continue
 JMP START_3
 
 START_4:
@@ -129,6 +128,7 @@ MOV A,M
 MOV L,B
 MOV M,A
 POP PSW
+DCR B
 JMP START_3.5
 
 CUSTOM_KIND:
@@ -296,7 +296,7 @@ DB 80H ; 0A18H -> 8
 DB 90H ; 0A19H -> 9
 DB 88H ; 0A1AH -> A
 DB 83H ; 0A1BH -> B
-DB B8H ; 0A1CH -> C
+DB A7H ; 0A1CH -> C
 DB A1H ; 0A1DH -> D
 DB 86H ; 0A1EH -> E
 DB 8EH ; 0A1FH -> F
