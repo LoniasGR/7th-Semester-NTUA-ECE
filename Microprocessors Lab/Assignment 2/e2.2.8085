@@ -1,9 +1,8 @@
-IN 10H
 L1:
 CALL KIND   ; loads the code in A
 MOV C,A     ; temporary
 ANI 0FH     ; keep LSB	
-LXI H,0860H
+LXI H,0B60H
 MOV M,A     ; store A in memory
 MOV A,C
 ANI F0H     ; keep ms byte
@@ -13,7 +12,7 @@ RRC
 RRC         ; formatting
 INX H       ; next 7-segment
 MOV M,A     ; store A in memory
-LXI D,0860H ; in limits
+LXI D,0B60H ; in limits
 CALL STDM
 CALL DCD
 JMP L1

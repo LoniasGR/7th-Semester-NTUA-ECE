@@ -1,0 +1,305 @@
+IN 10H
+
+START:
+MVI C,00H
+CALL CUSTOM_KIND ; waiting for FETCH PC
+CPI 85H
+JNZ START
+
+START_2:
+MVI B,03H   ;
+LXI H,0A21H ;
+MOV A,M     ;
+STA 0A00H   ;set the display to . . _ _ _ _
+STA 0A01H   ; 
+STA 0A02H   ;
+STA 0A03H   ;
+LXI H,0A20H ;
+MOV A,M     ;
+STA 0A04H   ;
+STA 0A05H   ;
+
+START_3:
+MVI C,00H ; C holds the information about what display should do
+	   ; if 0 just refresh the display, if 1 rotate digits one
+	   ; position to the right and then display if 2 rotate
+          ; digits one position to the left then display
+CALL CUSTOM_KIND
+CPI 0FH
+JC PUT_NUMBER ;
+JZ PUT_NUMBER ; if button < F then its a number
+
+START_3.5:
+CPI 85H      ; reset the display
+JZ START_2
+MOV A,B      ; if B gets to 0 all digits are in display
+CPI 00H
+JZ START_4
+DCR B	      ; if not all digits are in display continue
+JMP START_3
+
+START_4:
+MVI C,00H
+CALL CUSTOM_KIND
+
+START_4.5:
+CPI 85H	 ; if fetch pc is pressed reset the display
+JZ START_2
+CPI 03H	;  3 is the static display option
+JZ STATIC_DISPLAY
+CPI 02H  	; 2 is the rotate left option
+JZ LEFT_SHIFT_DISPLAY
+CPI 01H	; 1 is the rotate right option
+JZ RIGHT_SHIFT_DISPLAY
+JMP START_4	; if anything else is pressed, wait for another keystroke
+HLT
+
+STATIC_DISPLAY:
+LXI H,0A00H
+
+STATIC_DISPLAY_LOOP:
+MOV A,M
+CPI 7FH
+JZ DOT_FOUND
+INR L
+MOV A,L
+CPI 06H
+JZ RESET_COUNTER
+JMP STATIC_DISPLAY_LOOP
+
+RESET_COUNTER:
+LXI H,0A00H
+JMP STATIC_DISPLAY_LOOP
+
+DOT_FOUND:
+INR L
+MOV A,M
+CPI 7FH
+JNZ START_4
+DCR L
+MOV A,L
+
+ROTATE_RIGHT_FOR_STATIC:
+PUSH PSW
+LXI H,0A00H
+MOV A,M
+LXI H,0A06H
+MOV M,A
+LXI H,0A01H
+ 
+ROTATE_RIGHT_LOOP_FOR_STATIC:
+MOV A,M
+DCR L
+MOV M,A
+INR L
+MOV A,L
+CPI 06H
+JZ ROTATE_RIGHT_FOR_STATIC_END
+INR L
+JMP ROTATE_RIGHT_LOOP_FOR_STATIC
+
+ROTATE_RIGHT_FOR_STATIC_END:
+POP PSW
+CPI 00H
+JZ START_4
+DCR A
+JMP ROTATE_RIGHT_FOR_STATIC
+
+RIGHT_SHIFT_DISPLAY:
+ ;DISPLAY_ALL is used to do the rotating, called from within our custom
+ ; kind.
+MVI C,01H
+CALL CUSTOM_KIND
+JMP START_4.5
+
+LEFT_SHIFT_DISPLAY:
+	;same as right_shift_display.
+MVI C,02H
+CALL CUSTOM_KIND
+JMP START_4.5
+
+PUT_NUMBER:
+; takes the number from KIND and puts on the correct array spot the
+; 7-seg code of that number.
+PUSH PSW
+MVI H,0AH
+ADI 10H
+MOV L,A
+MOV A,M
+MOV L,B
+MOV M,A
+POP PSW
+JMP START_3.5
+
+CUSTOM_KIND:
+;we couldnt use the default kind, cause it used dcd, which doesnt
+;support dots (.). So we copied kind's code and swapped dcd use
+;with a custom display routine. Everything else is intact.
+
+PUSH D
+PUSH H
+
+CUSTOM_KIND1: 
+CALL DISPLAY_ALL ;UPDATE DISPLAY AND WAIT
+CALL KPU ;CHK FOR PUSHED KEY	
+JNZ CUSTOM_KIND1 ;IF KEY STILL PUSHED
+
+CUSTOM_KIND2: 
+CALL DISPLAY_ALL ;UPDATE DISP AND WAIT
+CALL KPU ;SHK FOR PUSHED KEY
+JZ CUSTOM_KIND2 ;IF KEY NOT PUSHED
+LXI H,0BE8H ;ADRS OF FIRST KEY ROW SCAN
+MVI D,FFH ;LOAD ROW COUNTER TO 0-1
+
+CUSTOM_KIND3: 
+MOV A,M ;GET ROW N KEY DATA
+CPI F7H ;IS IT THE HDWR STEP KEY?
+JZ CUSTOM_KIND5 ;YES JUMPS
+CMA ;INVERT KEY DATA
+INR L ;NEXT ROW
+INR D ;NEXT TABLE BLOCK
+ANA A ;TEST ROW N FOR 0
+JZ CUSTOM_KIND3 ;JUMP IF KEY NOT PUSHED
+CPI 04H ;SEE IF D3=1
+JNZ CUSTOM_KIND4 ;IF SO
+DCR A ;ELSE SET A=3
+
+CUSTOM_KIND4: 
+ADD D ;ADD 3X THE ROW N TO
+ADD D ;GET THE TABLE OFFSET
+ADD D
+MOV E,A ;STORE TABLE INDEX
+MVI D,00H ;CLEAR MS BYTE OF DE
+LXI H,01AFH ;ADRS OF KEY CODE TABLE
+DAD D ;ADD INDEX TO TABLE ADRS
+MOV A,M ;PUT KEY CODE IN A
+
+CUSTOM_KIND5: 
+POP H
+POP D
+RET 
+
+DISPLAY_ALL: 
+; custom multi-function routine to handle the 7-seg display
+; takes as arguments the reg C, as well as the 6 position
+; array originating from mem 0A00h.
+; DISPLAY_ALL uses the same idea as DCD, taking the codes from a
+; specific memory position and copying the to the display.
+PUSH PSW
+PUSH H
+PUSH B
+MOV A,C
+CPI 00H
+JZ JUST_DISPLAY
+CPI 01H
+JZ ROTATE_RIGHT
+CPI 02H
+JZ ROTATE_LEFT
+
+ROTATE_LEFT:
+LXI H,0A05H
+
+ROTATE_LEFT_LOOP:
+MOV A,M
+INR L
+MOV M,A
+DCR L
+MOV A,L
+CPI 00H
+JZ ROTATE_LEFT_END
+DCR L
+JMP ROTATE_LEFT_LOOP
+
+ROTATE_LEFT_END:
+LXI H,0A06H
+MOV A,M
+LXI H,0A00H
+MOV M,A
+JMP JUST_DISPLAY
+
+ROTATE_RIGHT:
+LXI H,0A00H
+MOV A,M
+LXI H,0A06H
+MOV M,A
+LXI H,0A01H
+ 
+ROTATE_RIGHT_LOOP:
+MOV A,M
+DCR L
+MOV M,A
+INR L
+MOV A,L
+CPI 06H
+JZ JUST_DISPLAY
+INR L
+JMP ROTATE_RIGHT_LOOP
+
+JUST_DISPLAY:
+MVI C,30H
+MVI B,00H
+CALL DELB
+LXI H,0A00H
+MVI B,01H
+
+DISPLAY_LOOP:
+MOV A,L
+CPI 06H
+JZ DISPLAY_ALL_END
+MOV A,M
+MOV C,A
+CALL DISP
+INR L
+MOV A,B
+RLC
+MOV B,A
+JMP DISPLAY_LOOP
+
+DISPLAY_ALL_END:
+POP B
+POP H
+POP PSW
+RET
+
+DISP: 
+;DISP takes the position on whci 7-seg to put the number in reg B 
+;and the leds to light up on reg C (reverse logic)
+MVI A,FFH
+STA 3800H
+MOV A,B
+STA 2800H
+MOV A,C
+STA 3800H
+RET
+
+
+ORG 0A00H
+DB FFH ; 0A00H -> LSB
+DB FFH
+DB FFH
+DB FFH
+DB FFH
+DB FFH ; 0A05H -> MSB
+DB FFH
+
+ORG 0A10H 
+;lookup table for the 7-seg code of each number and letter.
+DB C0H ; 0A10H -> 0
+DB F9H ; 0A11H -> 1
+DB A4H ; 0A12H -> 2
+DB B0H ; 0A13H -> 3
+DB 99H ; 0A14H -> 4
+DB 92H ; 0A15H -> 5
+DB 82H ; 0A16H -> 6
+DB F8H ; 0A17H -> 7
+DB 80H ; 0A18H -> 8
+DB 90H ; 0A19H -> 9
+DB 88H ; 0A1AH -> A
+DB 83H ; 0A1BH -> B
+DB B8H ; 0A1CH -> C
+DB A1H ; 0A1DH -> D
+DB 86H ; 0A1EH -> E
+DB 8EH ; 0A1FH -> F
+DB 7FH ; 0A20H -> .
+DB F7H ; 0A21H -> _
+END

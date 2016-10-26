@@ -12,9 +12,9 @@ SIM
 EI
 
 MAIN:
-LDA 2000H
-ANI 01H
-CPI 01H
+LDA 2000H 	;check if the lsb switch is 1
+ANI 01H	;if not do nothing	
+CPI 01H	;
 JNZ MAIN
 JMP CHECK_EDGES
 
@@ -27,13 +27,13 @@ CALL DELB
 EI
 JMP MAIN
 
-DIRECTION:
+DIRECTION:	;
 MOV A,D
-CPI 00H
-JZ FIRST_TIME
+CPI 00H	; if D is 0 its the first time the train is moving
+JZ FIRST_TIME	; and starts at the right-most side
 MOV A,E
-CPI 00H
-JZ LEFT
+CPI 00H	;else if E = direction is 0 move left, if it is 1 or 3
+JZ LEFT	;don't move, else if it's 2 move right
 CPI 01H
 JZ LED_ON
 CPI 02H
@@ -41,33 +41,33 @@ JZ RIGHT
 CPI 03H
 JZ LED_ON
 
-FIRST_TIME:
-INR D
-JMP LED_ON
+FIRST_TIME:	;make D = 0000 0001
+INR D		;
+JMP LED_ON	;
 
 LEFT:
-MOV A,D
-RLC 
-MOV D,A
-JMP LED_ON
+MOV A,D	;move one step to the left and light the led
+RLC 		;
+MOV D,A	;
+JMP LED_ON	;
 
-RIGHT:
+RIGHT:		; same as before for right direction
 MOV A,D
 RRC
 MOV D,A
 JMP LED_ON
 
-CHECK_EDGES:
-MOV A,D
+CHECK_EDGES:		;check if the train is on the left side
+MOV A,D		
 CPI 80H
 JNZ CHECK_EDGES_2
-MOV A,E
-CPI 00H
+MOV A,E		;if it is on left side, check the direction the train
+CPI 00H		;is moving. if right then do nothing
 JZ MAIN
 JMP DIRECTION
  	
 CHECK_EDGES_2:
-MOV A,D
+MOV A,D		;same as before for right side
 CPI 01H
 JNZ DIRECTION
 MOV A,E
@@ -100,13 +100,13 @@ ANI 20H	;
 CPI 20H	;
 JZ ROUTINE_1	;
 
-INR E
+INR E		;pick the direction depending on the total number of interruts
 MOV A,E
 CPI 04H
 JZ RESET_E
 JMP ROUTINE_END
 
-RESET_E:
+RESET_E:		;if E>3 make it 0
 MVI E,00H
 JMP ROUTINE_END
 
