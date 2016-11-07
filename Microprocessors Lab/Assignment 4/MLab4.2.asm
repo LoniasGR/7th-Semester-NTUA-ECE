@@ -130,9 +130,9 @@ LOOP1:
     JG LOOP1
   
     ADD AL,30H
-    PUSH AX      
+;    PUSH AX      
     PRINT_CHAR AL
-    POP AX
+;    POP AX
     MOV [SI],AL
      
 LOOP2:
