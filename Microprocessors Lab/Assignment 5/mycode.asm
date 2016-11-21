@@ -51,7 +51,7 @@ START:
     SUB CL,1 
     MOV CH,CL              
     MOV AX,0
-    MOV BX,OFFSET9 NUMBER_1 
+    MOV BX,OFFSET NUMBER_1 
     CALL MAKE_NUMBER
     PUSH DX
     PUSH AX
