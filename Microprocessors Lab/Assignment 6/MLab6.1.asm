@@ -6,6 +6,12 @@
 ;
 
 
+reset:
+	ldi r24,low(RAMEND)
+	out SPL,r24
+	ldi r24,high(RAMEND)
+	out SPH,r24
+
 start:
     ser r26			
 	out DDRA,r26	;enable A datapath for write

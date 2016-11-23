@@ -30,6 +30,26 @@ int rotate_LED (int direction, int times, int LED)
 	}
 	return LED;
 }
+
+void check_for_other_cleared_buttons (int pin, bool *pressed_buttons)
+{
+	if (pin < 1) {
+		if (bit_is_clear(PIND,PIND1) && (pressed_buttons[1] == true)) 
+			pressed_buttons[1] = false;
+	}
+	if (pin < 2) {
+		if (bit_is_clear(PIND,PIND2) && (pressed_buttons[2] == true))
+		pressed_buttons[2] = false;
+	}
+	if (pin < 3) {
+		if (bit_is_clear(PIND,PIND3) && (pressed_buttons[3] == true))
+		pressed_buttons[3] = false;
+	}
+	if (pin < 4) {
+		if (bit_is_clear(PIND,PIND4) && (pressed_buttons[4] == true))
+		pressed_buttons[4] = false;
+	}	
+}
 int main(void)
 {
 	DDRB = 0xFF; /* port B is output */
@@ -55,18 +75,22 @@ int main(void)
 		
 		if (bit_is_clear(PIND,PIND0) && (pressed_buttons[0] == true)) {
 			LED = rotate_LED(-1, 1, LED);
+			check_for_other_cleared_buttons(0, &pressed_buttons);
 			pressed_buttons[0] = false;
 		}
 		if (bit_is_clear(PIND,PIND1) && (pressed_buttons[1] == true)) {
 			LED = rotate_LED(1, 1, LED);
+			check_for_other_cleared_buttons(1, &pressed_buttons);
 			pressed_buttons[1] = false;
 		}
 		if (bit_is_clear(PIND,PIND2) && (pressed_buttons[2] == true)) {
 			LED = rotate_LED(-1, 2, LED);
+			check_for_other_cleared_buttons(2, &pressed_buttons);
 			pressed_buttons[2] = false;
 		}		
 		if (bit_is_clear(PIND,PIND3) && (pressed_buttons[3] == true)) {
 			LED = rotate_LED(1, 2, LED);
+			check_for_other_cleared_buttons(3, &pressed_buttons);
 			pressed_buttons[3] = false;
 		}
 		if (bit_is_clear(PIND,PIND4) && (pressed_buttons[4] == true)) {
