@@ -1,11 +1,4 @@
-;
-; AssemblerApplication1.asm
-;
-; Created: 6/12/2016 12:12:42 μμ
-; Author : Leonidas Avdelas
-;
-
-
+.include "m16def.inc"
 start:
 clr r26
 out DDRB, r26
@@ -32,14 +25,14 @@ in r29,PINA
 mov r25,r26
 
 PC0check:
-andi r26, 0x03 ;check if 2 LSBs are 00 
+andi r26, 0b00000011 ;check if 2 LSBs are 00 
 cpi r26, 0	   ;then PC0 is off (OR)
 brne PC0on
  
 PC1check:
 mov r26, r25	;check if bytes 2 & 3 are 11
-andi r26, 0x0C  ;else PC1 is off (AND)
-cpi r26, 0x0C
+andi r26, 0b000001100  ;else PC1 is off (AND)
+cpi r26, 0b00001100
 breq PC1on
 
 PC2check:
@@ -70,27 +63,27 @@ brsh reverse
 jmp finish
 
 reverse:
-com r28
-andi r28, 0x0F
+com r27
+andi r27, 0x0F
 
 finish:
-out PORTC, r28
+out PORTC, r27
 jmp main
 
 PC0on:
 ldi r28, 0x01
-add r27, r28
+or r27, r28
 jmp PC1check
 
 PC1on:
 ldi r28, 0x02
-add r27,r28
+or r27,r28
 jmp PC2check
 
 PC2on:
 ldi r24,0x01
 ldi r28, 0x04
-add r27, r28
+or r27, r28
 jmp PC3check
 
 PC2off:
