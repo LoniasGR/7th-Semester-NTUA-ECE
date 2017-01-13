@@ -5,6 +5,8 @@
  */
 package pacman;
 
+import java.io.IOException;
+
 /**
  *
  * @author Leonidas
@@ -14,8 +16,9 @@ public class Pacman {
     private static GUI gui;
     /**
      * @param args the command line arguments
+     * @throws java.io.IOException
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         gui = new GUI();
     }
     
