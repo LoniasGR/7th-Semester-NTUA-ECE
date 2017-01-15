@@ -8,7 +8,7 @@
 struct AdjListNode
 {
     int dest;
-    int weight;
+     int weight;
     struct AdjListNode* next;
 };
 
@@ -54,7 +54,7 @@ struct Graph* createGraph(int V)
 }
 
 // Adds an edge to an undirected graph
-void addEdge(struct Graph* graph, int src, int dest, int weight)
+void addEdge(struct Graph* graph, int src, int dest,  int weight)
 {
     // Add an edge from src to dest.  A new node is added to the adjacency
     // list of src.  The node is added at the begining
@@ -72,7 +72,7 @@ void addEdge(struct Graph* graph, int src, int dest, int weight)
 struct MinHeapNode
 {
     int  v;
-    int key;
+     int key;
 };
 
 // Structure to represent a min heap
@@ -220,14 +220,21 @@ void printArr(int arr[], int n)
         printf("%d - %d\n", arr[i], i);
 }
 
+void createMST(struct Graph* MST, int parent[], int key[], int V) {
+    for(int i = 1; i <V ; i++)
+        addEdge(MST, parent[i], i, key[i]);
+
+}
 
 // The main function that constructs Minimum Spanning Tree (MST)
 // using Prim's algorithm
-int PrimMST(struct Graph* graph)
+struct Graph* PrimMST(struct Graph* graph)
 {
     int V = graph->V;// Get the number of vertices in graph
     int parent[V];   // Array to store constructed MST
-    int key[V];      // Key values used to pick minimum weight edge in cut
+    int key[V];  // Key values used to pick minimum weight edge in cut
+
+    struct Graph* MST = createGraph(V);
 
     // minHeap represents set E
     struct MinHeap* minHeap = createMinHeap(V);
@@ -278,10 +285,93 @@ int PrimMST(struct Graph* graph)
             pCrawl = pCrawl->next;
         }
     }
-    printArr(parent, V);
+
+    createMST(MST, parent, key, V);
+    return MST;
 }
 
+struct trips {
+    int source;
+    int destination;
+    struct trips* next;
+};
 
+struct tripsList {
+    int Q;
+    struct trips* head;
+};
+
+struct tripsList* createList(int Q) {
+    struct tripsList* List = (struct tripsList*)
+        malloc(sizeof(struct tripsList));
+    List->Q = Q;
+    List->head = NULL;
+
+    return List;
+}
+
+void addElement(struct tripsList* list, int startNode, int endNode) {
+    if (list->head == NULL) {
+        struct trips* node = (struct trips*) malloc (sizeof(struct trips));
+        node->source = startNode;
+        node->destination = endNode;
+        node->next = NULL;
+        list->head = node;
+    }
+    else {
+    struct trips* temp = list->head;
+    while(temp->next != NULL)
+        temp = temp->next;
+    struct trips* node = (struct trips*) malloc (sizeof(struct trips));
+    node->source = startNode;
+    node->destination = endNode;
+    node->next = NULL;
+    temp->next = node;
+    }
+}
+void DFS (struct Graph* graph, int start, bool* visited, int* cost) {
+    int result;
+    visited[start] = true;
+
+
+    struct AdjListNode* edges = graph->array[start].head;
+
+    while (edges != NULL) {
+        if(!visited[edges->dest]) {
+
+            cost[edges->dest] = cost[start] + edges->weight;
+            cost[edges->dest] =
+                cost[start] > edges->weight ? cost[start] : edges->weight;
+            visited[edges->dest] = true;
+            DFS(graph, edges->dest, visited, cost);
+
+        }
+        edges = edges->next;
+    }
+}
+void DFS_minimax (struct Graph* MST, struct tripsList* list, int V) {
+    bool visited[V];
+    int cost[V];
+    struct trips* previous = NULL;
+    struct trips* current = NULL;
+
+    for (int cntr = 0; cntr < list->Q; cntr++) {
+        previous = current;
+        current = list->head;
+        list->head = list->head->next;
+        if (previous == NULL || ((previous->source) != (current->source))) {
+            for (int i = 0; i < V; i++) {
+                visited[i] = false;
+                cost[i] = 0;
+            }
+            DFS(MST, current->source, visited, cost);
+            printf("%d\n", cost[current->destination]);
+        }
+        else {
+            printf("%d\n", cost[current->destination]);
+        }
+    }
+}
 int main (int argc, char **argv) {
 	FILE *fp;
 	if (argc == 1) {
@@ -291,17 +381,30 @@ int main (int argc, char **argv) {
 	 fp = fopen(argv[1], "r");
 	}
 
-    int N, M;
+    int N, M, Q;
     fscanf(fp, "%d %d\n", &N, &M);
 
     struct Graph* graph = createGraph(N);
 
     for (int cntr = 0; cntr < M; cntr++)
     {
-        int srcNode, dstNode, cost;
+        int srcNode, dstNode;
+        int cost;
         fscanf(fp, "%d %d %d \n", &srcNode, &dstNode, &cost);
         addEdge(graph,  srcNode-1, dstNode-1, cost);
     }
 
-    PrimMST(graph);
+    fscanf(fp, "%d\n", &Q);
+    struct tripsList* list = createList(Q);
+
+    for (int cntr2 = 0; cntr2 < Q; cntr2++) {
+        int startNode, endNode;
+        fscanf(fp, "%d %d\n", &startNode, &endNode);
+        addElement(list, startNode-1, endNode-1);
+    }
+
+    struct Graph* MST;
+    MST = PrimMST(graph);
+    DFS_minimax(MST, list,N);
+    return 0;
 }
