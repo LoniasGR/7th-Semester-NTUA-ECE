@@ -33,6 +33,8 @@ struct process* current;
 
 /*************************************************************/
 
+/* a process has a pNumber given by us, a PID given by the kernel and
+ * the name of the executable that is running.*/
 struct process{
 		int pNumber;
 		pid_t pPid;
@@ -40,7 +42,7 @@ struct process{
 		struct process* next;
 };
 
-
+/* allocates space in the heap for a process struct */
 struct process* create_process(void)
 {
 	struct process* proc;
@@ -52,6 +54,7 @@ struct process* create_process(void)
 	return proc;
 }
 
+/* initializes a process struct to the given id and executable name*/
 struct process* init_process(int number, char* execName)
 {
 		struct process* proc = create_process();
@@ -63,6 +66,7 @@ struct process* init_process(int number, char* execName)
 		return proc;
 }
 
+/* a struct holding the number of processes and
 struct processList {
 		int count;
 		struct process* head;
@@ -80,16 +84,17 @@ struct processList* create_list (void)
 	return list;
 }
 /*initializes an empty process list*/
-struct processList* init_list (int count)
+struct processList* init_list (void)
 {
 	struct processList* list = create_list();
-	list->count = count;
+	list->count = 0;
 	list->head = NULL;
 	return list;
 }
 
 void add_proc_to_list (struct processList* list, struct process* proc)
 {
+	list->count +=1;
 	if(list->head == NULL)
 		list->head = proc;
 	else {
@@ -104,6 +109,7 @@ void remove_proc_from_list (struct processList* list, struct process* proc)
 {
 	struct process* temp = list->head;
 	struct process* prev = NULL;
+	list->count -= 1;
 
 	if (list->head == proc)
 		list->head = NULL;
@@ -262,7 +268,7 @@ int main(int argc, char *argv[])
 	pid_t p;
 	int i;
 
-	procList = init_list(argc-1);
+	procList = init_list();
 	for (i=1; i < argc; i++) {
 		printf("i is %d\n", i);
 		current = init_process(i, argv[i]);
@@ -270,7 +276,6 @@ int main(int argc, char *argv[])
 	}
 
 	nproc = argc - 1; /* number of processes goes here */
-	printf("%d processes started!\n", nproc );
 
 	current = procList->head;
 	for (i = 0; i < nproc; i++) {
