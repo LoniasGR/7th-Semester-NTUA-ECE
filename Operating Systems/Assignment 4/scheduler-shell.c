@@ -17,6 +17,24 @@
 #define TASK_NAME_SZ 60               /* maximum size for a task's name */
 #define SHELL_EXECUTABLE_NAME "shell" /* executable for shell */
 
+
+/************* DEFINITIONS ***********************************/
+
+struct processList;
+struct process;
+
+/*************************************************************/
+
+
+/************* GLOBAL VARIABLES ******************************/
+
+struct processList* procList;
+struct process* current;
+
+/************************************************************/
+
+
+
 /* Print a list of all tasks currently being scheduled.  */
 static void
 sched_print_tasks(void)
@@ -63,7 +81,7 @@ process_request(struct request_struct *rq)
 	}
 }
 
-/* 
+/*
  * SIGALRM handler
  */
 static void
@@ -72,7 +90,7 @@ sigalrm_handler(int signum)
 	assert(0 && "Please fill me!");
 }
 
-/* 
+/*
  * SIGCHLD handler
  */
 static void
