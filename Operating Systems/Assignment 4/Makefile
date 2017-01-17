@@ -22,10 +22,10 @@ shell: shell.o proc-common.o
 prog: prog.o proc-common.o
 	$(CC) -o prog prog.o proc-common.o
 
-execve-example: execve-example.o 
+execve-example: execve-example.o
 	$(CC) -o execve-example execve-example.o
 
-strace-test: strace-test.o 
+strace-test: strace-test.o
 	$(CC) -o strace-test strace-test.o
 
 sigchld-example: sigchld-example.o proc-common.o

@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
@@ -17,22 +18,193 @@
 #define TASK_NAME_SZ 60               /* maximum size for a task's name */
 
 
+/************* DEFINITIONS ***********************************/
+
+struct processList;
+struct process;
+
+/*************************************************************/
+
+
+/************* GLOBAL VARIABLES ******************************/
+
+struct processList* procList;
+struct process* current;
+
+/*************************************************************/
+
+struct process{
+		int pNumber;
+		pid_t pPid;
+		char* execName;
+		struct process* next;
+};
+
+
+struct process* create_process(void)
+{
+	struct process* proc;
+	proc = (struct process*) malloc(sizeof(struct process));
+	if (proc == NULL) {
+		perror("create_process");
+		exit(EXIT_FAILURE);
+	}
+	return proc;
+}
+
+struct process* init_process(int number, char* execName)
+{
+		struct process* proc = create_process();
+		proc->pNumber = number;
+		proc->pPid = -1;
+		proc->execName = execName;
+		proc->next = NULL;
+
+		return proc;
+}
+
+struct processList {
+		int count;
+		struct process* head;
+};
+
+/* grabs memory from the stack for a processList*/
+struct processList* create_list (void)
+{
+	struct processList* list;
+	list = (struct processList*) malloc(sizeof(struct processList));
+	if (list == NULL) {
+		perror("processList malloc");
+		exit(EXIT_FAILURE);
+	}
+	return list;
+}
+/*initializes an empty process list*/
+struct processList* init_list (int count)
+{
+	struct processList* list = create_list();
+	list->count = count;
+	list->head = NULL;
+	return list;
+}
+
+void add_proc_to_list (struct processList* list, struct process* proc)
+{
+	if(list->head == NULL)
+		list->head = proc;
+	else {
+		struct process* temp = list->head;
+		while(temp->next != NULL)
+			temp = temp->next;
+		temp->next = proc;
+	}
+}
+
+void remove_proc_from_list (struct processList* list, struct process* proc)
+{
+	struct process* temp = list->head;
+	struct process* prev = NULL;
+
+	if (list->head == proc)
+		list->head = NULL;
+	else {
+		while(temp != proc) {
+			prev = temp;
+			temp = temp->next;
+		}
+
+		prev->next = temp->next;
+		}
+	free(temp);
+}
+
+
 /*
  * SIGALRM handler
  */
-static void
-sigalrm_handler(int signum)
+static void sigalrm_handler(int signum)
 {
-	assert(0 && "Please fill me!");
+	printf("ALARM!!\n");
+	if (signum != SIGALRM) {
+		fprintf(stderr, "Internal error: Called for signum %d, not SIGALRM\n",
+			signum);
+		exit(1);
+	}
+
+	kill(current->pPid, SIGSTOP);
 }
 
-/* 
+
+/*
  * SIGCHLD handler
  */
-static void
-sigchld_handler(int signum)
+static void sigchld_handler(int signum)
 {
-	assert(0 && "Please fill me!");
+	pid_t p;
+	int status;
+
+	if (signum != SIGCHLD) {
+		fprintf(stderr, "Internal error: Called for signum %d, not SIGCHLD\n",
+			signum);
+		exit(1);
+	}
+
+	/*
+	 * Something has happened to one of the children.
+	 * We use waitpid() with the WUNTRACED flag, instead of wait(), because
+	 * SIGCHLD may have been received for a stopped, not dead child.
+	 *
+	 * A single SIGCHLD may be received if many processes die at the same time.
+	 * We use waitpid() with the WNOHANG flag in a loop, to make sure all
+	 * children are taken care of before leaving the handler.
+	 */
+	for(;;) {
+		p = waitpid(-1, &status, WUNTRACED | WNOHANG);
+		if (p < 0) {
+			perror("waitpid");
+			exit(1);
+		}
+
+		if (p == 0)
+			break;
+
+		explain_wait_status(p, status);
+
+		if (WIFEXITED(status) || WIFSIGNALED(status)) {
+		/* A child has died */
+			struct process* temp = current;
+			current = current->next;
+			remove_proc_from_list(procList, temp);
+			if(procList->head == NULL) {
+				printf("All children finished. Exiting...\n");
+				exit(EXIT_SUCCESS);
+			}
+			if(current == NULL)
+					current = procList->head;
+
+			/* start alarm */
+			if (alarm(SCHED_TQ_SEC) < 0) {
+				perror("alarm");
+				exit(1);
+			}
+
+			kill(current->pPid, SIGCONT);
+		}
+
+		if (WIFSTOPPED(status)) {
+			/* A child has stopped due to SIGSTOP/SIGTSTP, etc... */
+			current = current->next;
+			if (current == NULL)
+				current = procList->head;
+
+			/* start alarm */
+			if (alarm(SCHED_TQ_SEC) < 0) {
+				perror("alarm");
+				exit(1);
+			}
+			kill(current->pPid, SIGCONT);
+		}
+	}
 }
 
 /* Install two signal handlers.
@@ -73,18 +245,58 @@ install_signal_handlers(void)
 	}
 }
 
+void child(void)
+{
+	char *newargv[] = { current->execName, NULL, NULL, NULL };
+	char *newenviron[] = { NULL };
+	execve(current->execName, newargv, newenviron);
+
+	/* Unreachable */
+	perror("execve");
+	exit(1);
+}
+
 int main(int argc, char *argv[])
 {
 	int nproc;
-	/*
-	 * For each of argv[1] to argv[argc - 1],
-	 * create a new child process, add it to the process list.
-	 */
+	pid_t p;
+	int i;
 
-	nproc = 0; /* number of proccesses goes here */
+	procList = init_list(argc-1);
+	for (i=1; i < argc; i++) {
+		printf("i is %d\n", i);
+		current = init_process(i, argv[i]);
+		add_proc_to_list(procList, current);
+	}
+
+	nproc = argc - 1; /* number of processes goes here */
+	printf("%d processes started!\n", nproc );
+
+	current = procList->head;
+	for (i = 0; i < nproc; i++) {
+		printf("i now is %d from proc %ld\n", i, (long)getpid());
+		p = fork();
+		if (p < 0) {
+			/* fork failed */
+			perror("fork");
+			exit(1);
+		}
+		else if (p == 0) {
+			raise(SIGSTOP);
+			child();
+		}
+		else  if (p > 0) {
+			current->pPid = p;
+			current = current->next;
+		}
+
+	}
 
 	/* Wait for all children to raise SIGSTOP before exec()ing. */
 	wait_for_ready_children(nproc);
+
+
+	printf("ALL CHILDREN READY!\n");
 
 	/* Install SIGALRM and SIGCHLD handlers. */
 	install_signal_handlers();
@@ -94,6 +306,16 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	current = procList->head;
+
+	/* start alarm */
+	if (alarm(SCHED_TQ_SEC) < 0) {
+		perror("alarm");
+		exit(1);
+	}
+	pid_t pid = current->pPid;
+	kill(pid, SIGCONT);
+	printf("And now we wait....\n");
 
 	/* loop forever  until we exit from inside a signal handler. */
 	while (pause())
