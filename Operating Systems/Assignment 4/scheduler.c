@@ -28,14 +28,14 @@ struct process;
 
 /************* GLOBAL VARIABLES ******************************/
 
-struct processList* procList;
-struct process* current;
+static struct processList* procList;
+static struct process* current;
 
 /*************************************************************/
 
 /* a process has a pNumber given by us, a PID given by the kernel and
  * the name of the executable that is running.*/
-struct process{
+ struct process {
 		int pNumber;
 		pid_t pPid;
 		char* execName;
@@ -43,7 +43,7 @@ struct process{
 };
 
 /* allocates space in the heap for a process struct */
-struct process* create_process(void)
+static struct process* create_process(void)
 {
 	struct process* proc;
 	proc = (struct process*) malloc(sizeof(struct process));
@@ -55,7 +55,7 @@ struct process* create_process(void)
 }
 
 /* initializes a process struct to the given id and executable name*/
-struct process* init_process(int number, char* execName)
+static struct process* init_process(int number, char* execName)
 {
 		struct process* proc = create_process();
 		proc->pNumber = number;
@@ -66,14 +66,15 @@ struct process* init_process(int number, char* execName)
 		return proc;
 }
 
-/* a struct holding the number of processes and
-struct processList {
+/* a struct holding the number of processes and the head of a
+ * process list */
+ struct processList {
 		int count;
 		struct process* head;
 };
 
 /* grabs memory from the stack for a processList*/
-struct processList* create_list (void)
+static struct processList* create_list (void)
 {
 	struct processList* list;
 	list = (struct processList*) malloc(sizeof(struct processList));
@@ -84,7 +85,7 @@ struct processList* create_list (void)
 	return list;
 }
 /*initializes an empty process list*/
-struct processList* init_list (void)
+static struct processList* init_list (void)
 {
 	struct processList* list = create_list();
 	list->count = 0;
@@ -92,7 +93,8 @@ struct processList* init_list (void)
 	return list;
 }
 
-void add_proc_to_list (struct processList* list, struct process* proc)
+/* adds a process to the process list */
+static void add_proc_to_list (struct processList* list, struct process* proc)
 {
 	list->count +=1;
 	if(list->head == NULL)
@@ -105,7 +107,8 @@ void add_proc_to_list (struct processList* list, struct process* proc)
 	}
 }
 
-void remove_proc_from_list (struct processList* list, struct process* proc)
+/* remove a process from the process list */
+static void remove_proc_from_list (struct processList* list, struct process* proc)
 {
 	struct process* temp = list->head;
 	struct process* prev = NULL;
@@ -251,14 +254,15 @@ install_signal_handlers(void)
 	}
 }
 
-void child(void)
+static void
+child(void)
 {
 	char *newargv[] = { current->execName, NULL, NULL, NULL };
 	char *newenviron[] = { NULL };
 	execve(current->execName, newargv, newenviron);
 
 	/* Unreachable */
-	perror("execve");
+	perror("execve:");
 	exit(1);
 }
 
