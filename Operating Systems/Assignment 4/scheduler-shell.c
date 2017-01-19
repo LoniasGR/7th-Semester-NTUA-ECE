@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -22,6 +23,7 @@
 
 struct processList;
 struct process;
+static void child(struct process*);
 
 /*************************************************************/
 
@@ -30,6 +32,13 @@ struct process;
 
 static struct processList* procList;
 static struct process* current;
+
+/* used to see if SIGCHLD was called thanks to a shell action
+ * 0 is for SIGKILL
+ * 1 is for SIGSTOP from starting a new process */
+
+static bool exceptions [2] = {false, false};
+static pid_t  exceptionsID [2];
 
 /************************************************************/
 
@@ -133,12 +142,43 @@ remove_proc_from_list (struct processList* list, struct process* proc)
 	free(temp);
 }
 
+/* given an id find the process it corresponds */
+static struct process*
+find_process_by_id (struct processList* list, int id)
+{
+	struct process* temp = list->head;
+
+	while(temp->pNumber != id)
+		temp = temp->next;
+
+	if(temp == NULL) {
+		printf("ID %d not found! Program Error! Terminating...\n", id);
+		exit(1);
+	}
+
+	return temp;
+}
 
 /* Print a list of all tasks currently being scheduled.  */
 static void
 sched_print_tasks(void)
 {
-	assert(0 && "Please fill me!");
+	struct process* temp = procList->head;
+
+	printf("processes running: %d\n", procList->count);
+
+	while(temp != NULL) {
+		if (temp == current) {
+			printf("Currently running: \n");
+		}
+
+		printf("process ID: %d, "
+			   "process PID: %ld, "
+		   	   "executable name: %s\n",
+			   temp->pNumber, (long)temp->pPid, temp->execName);
+
+			   temp = temp->next;
+	}
 }
 
 /* Send SIGKILL to a task determined by the value of its
@@ -147,7 +187,12 @@ sched_print_tasks(void)
 static int
 sched_kill_task_by_id(int id)
 {
-	assert(0 && "Please fill me!");
+	struct process* temp = find_process_by_id(procList, id);
+	kill(temp->pPid, SIGKILL);
+
+	exceptions[0] = true;
+	exceptionsID[0] = temp->pNumber;
+
 	return -ENOSYS;
 }
 
@@ -156,7 +201,31 @@ sched_kill_task_by_id(int id)
 static void
 sched_create_task(char *executable)
 {
-	assert(0 && "Please fill me!");
+	struct process* temp;
+	int id = procList->count + 1;
+	pid_t p;
+
+	temp = init_process(id, executable);
+	add_proc_to_list(procList, temp);
+
+	p = fork();
+
+	if(p < 0) {
+		/* fork failed */
+		perror("fork");
+		exit(1);
+	}
+
+	else if (p == 0) {
+		child(temp);
+	}
+	else {
+		temp->pPid = p;
+		exceptions[1] = true;
+		exceptionsID[1] = temp->pNumber;
+
+	}
+
 }
 
 /* Process requests by the shell.  */
@@ -233,37 +302,55 @@ sigchld_handler(int signum)
 		explain_wait_status(p, status);
 
 		if (WIFEXITED(status) || WIFSIGNALED(status)) {
-		/* A child has died */
-			struct process* temp = current;
-			current = current->next;
-			remove_proc_from_list(procList, temp);
-			if(procList->head == NULL) {
-				printf("All children finished. Exiting...\n");
-				exit(EXIT_SUCCESS);
+			/* A child has died */
+
+			/* The child died because we terminated it with SIGKILL */
+			if (exceptions[0] == true) {
+				struct process* temp;
+				exceptions[0] = false;
+				temp = find_process_by_id(procList, exceptionsID[0]);
+				remove_proc_from_list(procList, temp);
+
+				if(procList->head == NULL) {
+					printf("All children finished. Exiting...\n");
+					exit(EXIT_SUCCESS);
+				}
 			}
-			if(current == NULL)
+
+			/* other reasons */
+			else {
+				struct process* temp = current;
+				current = current->next;
+				remove_proc_from_list(procList, temp);
+
+				if(procList->head == NULL) {
+					printf("All children finished. Exiting...\n");
+					exit(EXIT_SUCCESS);
+				}
+				if(current == NULL)
+						current = procList->head;
+
+				/* start alarm */
+				if (alarm(SCHED_TQ_SEC) < 0) {
+					perror("alarm");
+					exit(1);
+				}
+
+				kill(current->pPid, SIGCONT);
+			}
+		}
+		if (WIFSTOPPED(status)) {
+				/* A child has stopped due to SIGSTOP/SIGTSTP, etc... */
+				current = current->next;
+				if (current == NULL)
 					current = procList->head;
 
-			/* start alarm */
-			if (alarm(SCHED_TQ_SEC) < 0) {
-				perror("alarm");
-				exit(1);
-			}
-
-			kill(current->pPid, SIGCONT);
-		}
-
-		if (WIFSTOPPED(status)) {
-			/* A child has stopped due to SIGSTOP/SIGTSTP, etc... */
-			current = current->next;
-			if (current == NULL)
-				current = procList->head;
-
-			/* start alarm */
-			if (alarm(SCHED_TQ_SEC) < 0) {
-				perror("alarm");
-				exit(1);
-			}
+					/* start alarm */
+				//	printf("%d\n", current->pNumber);
+					if (alarm(SCHED_TQ_SEC) < 0) {
+						perror("alarm");
+						exit(1);
+				}
 			kill(current->pPid, SIGCONT);
 		}
 	}
@@ -411,7 +498,8 @@ shell_request_loop(int request_fd, int return_fd)
 	for (;;) {
 		if (read(request_fd, &rq, sizeof(rq)) != sizeof(rq)) {
 			perror("scheduler: read from shell");
-			fprintf(stderr, "Scheduler: giving up on shell request processing.\n");
+			fprintf(stderr,
+				"Scheduler: giving up on shell request processing.\n");
 			break;
 		}
 
@@ -421,18 +509,21 @@ shell_request_loop(int request_fd, int return_fd)
 
 		if (write(return_fd, &ret, sizeof(ret)) != sizeof(ret)) {
 			perror("scheduler: write to shell");
-			fprintf(stderr, "Scheduler: giving up on shell request processing.\n");
+			fprintf(stderr,
+				 "Scheduler: giving up on shell request processing.\n");
 			break;
 		}
 	}
 }
 
 static void
-child(void)
+child(struct process* proc)
 {
-	char *newargv[] = { current->execName, NULL, NULL, NULL };
+	char *execName = proc->execName;
+	char *newargv[] = { execName, NULL, NULL, NULL };
 	char *newenviron[] = { NULL };
-	execve(current->execName, newargv, newenviron);
+	raise(SIGSTOP);
+	execve(execName, newargv, newenviron);
 
 	/* Unreachable */
 	perror("execve:");
@@ -478,8 +569,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		else if (p == 0) {
-			raise(SIGSTOP);
-			child();
+			child(current);
 		}
 		else  if (p > 0) {
 			current->pPid = p;
