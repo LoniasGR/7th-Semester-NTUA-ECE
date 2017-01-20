@@ -108,13 +108,14 @@ static void add_proc_to_list (struct processList* list, struct process* proc)
 }
 
 /* remove a process from the process list */
-static void remove_proc_from_list (struct processList* list, struct process* proc)
+static void
+remove_proc_from_list (struct processList* list, struct process* proc)
 {
 	struct process* temp = list->head;
-	struct process* prev = NULL;
+	struct process* prev = list->head;
 	list->count -= 1;
 
-	if (list->head == proc)
+	if (list->count == 0)
 		list->head = NULL;
 	else {
 		while(temp != proc) {

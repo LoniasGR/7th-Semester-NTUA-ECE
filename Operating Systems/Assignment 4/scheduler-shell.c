@@ -126,10 +126,10 @@ static void
 remove_proc_from_list (struct processList* list, struct process* proc)
 {
 	struct process* temp = list->head;
-	struct process* prev = NULL;
+	struct process* prev = list->head;
 	list->count -= 1;
 
-	if (list->head == proc)
+	if (list->count == 0)
 		list->head = NULL;
 	else {
 		while(temp != proc) {
@@ -150,11 +150,6 @@ find_process_by_id (struct processList* list, int id)
 
 	while(temp->pNumber != id)
 		temp = temp->next;
-
-	if(temp == NULL) {
-		printf("ID %d not found! Program Error! Terminating...\n", id);
-		exit(1);
-	}
 
 	return temp;
 }
@@ -188,12 +183,16 @@ static int
 sched_kill_task_by_id(int id)
 {
 	struct process* temp = find_process_by_id(procList, id);
-	kill(temp->pPid, SIGKILL);
+	if (temp != NULL) {
+		kill(temp->pPid, SIGKILL);
 
-	exceptions[0] = true;
-	exceptionsID[0] = temp->pNumber;
+		exceptions[0] = true;
+		exceptionsID[0] = temp->pNumber;
 
-	return -ENOSYS;
+		return 0;
+	}
+	else
+		return -ENOSYS;
 }
 
 
