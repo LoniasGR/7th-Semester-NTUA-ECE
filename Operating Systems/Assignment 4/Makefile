@@ -8,7 +8,9 @@ CC = gcc
 #CFLAGS = -Wall -g
 CFLAGS = -Wall -O2 -g
 
-all: scheduler scheduler-shell shell prog execve-example strace-test sigchld-example
+all: scheduler scheduler-shell \
+	shell prog execve-example strace-test sigchld-example \
+	scheduler-priorities
 
 scheduler: scheduler.o proc-common.o
 	$(CC) -o scheduler scheduler.o proc-common.o
@@ -16,8 +18,8 @@ scheduler: scheduler.o proc-common.o
 scheduler-shell: scheduler-shell.o proc-common.o
 	$(CC) -o scheduler-shell scheduler-shell.o proc-common.o
 
-scheduler-prorities: scheduler-prorities.o proc-common.o
-	$(CC) -o scheduler-prorities scheduler-prorities.o proc-common.o
+scheduler-priorities: scheduler-priorities.o proc-common.o
+	$(CC) -o scheduler-priorities scheduler-priorities.o proc-common.o
 
 shell: shell.o proc-common.o
 	$(CC) -o shell shell.o proc-common.o
@@ -46,8 +48,8 @@ scheduler.o: scheduler.c proc-common.h request.h
 scheduler-shell.o: scheduler-shell.c proc-common.h request.h
 	$(CC) $(CFLAGS) -o scheduler-shell.o -c scheduler-shell.c
 
-scheduler-prorities.o: scheduler-prorities.c proc-common.h request.h
-	$(CC) $(CFLAGS) -o scheduler-prorities.o -c scheduler-prorities.c
+scheduler-priorities.o: scheduler-priorities.c proc-common.h request.h
+	$(CC) $(CFLAGS) -o scheduler-priorities.o -c scheduler-priorities.c
 
 prog.o: prog.c
 	$(CC) $(CFLAGS) -o prog.o -c prog.c
