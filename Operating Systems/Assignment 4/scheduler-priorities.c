@@ -19,6 +19,15 @@
 #define SHELL_EXECUTABLE_NAME "shell" /* executable for shell */
 
 
+/*
+ * priority of processes. HIGH priority processes are executed first and then
+ * the low priority ones
+ * SPECIAL go inbetween working with both the other priorities
+ */
+#define LOW 0
+#define HIGH 1
+#define SPECIAL 2
+
 /************* DEFINITIONS ***********************************/
 
 struct processList;
@@ -33,18 +42,24 @@ static void child(struct process*);
 static struct processList* procList;
 static struct process* current;
 
-/* used to see if SIGCHLD was called thanks to a shell action
+/*
+ * used to see if SIGCHLD was called thanks to a shell action
  * 0 is for SIGKILL
- * 1 is for SIGSTOP from starting a new process */
+ * 1 is for SIGSTOP from starting a new process
+ */
 
 static bool exceptions [2] = {false, false};
 static pid_t  exceptionsID [2];
 
 /************************************************************/
 
-/* a process has a pNumber given by us, a PID given by the kernel and
- * the name of the executable that is running.*/
+
+/*
+ *a process has a pNumber given by us, a PID given by the kernel and
+ * the name of the executable that is running.
+ */
 struct process{
+		int prio;
 		int pNumber;
 		pid_t pPid;
 		char* execName;
@@ -69,6 +84,7 @@ static struct process*
 init_process(int number, char* execName)
 {
 		struct process* proc = create_process();
+		proc->prio = LOW;
 		proc->pNumber = number;
 		proc->pPid = -1;
 		proc->execName = execName;
@@ -81,10 +97,15 @@ init_process(int number, char* execName)
  * process list */
 struct processList {
 		int count;
+		int high_prio_procs;
+		int low_prio_procs;
+		int special_prio_procs;
 		struct process* head;
 };
 
-/* grabs memory from the stack for a processList*/
+/*
+ * grabs memory from the stack for a processList
+ */
 static struct processList*
 create_list (void)
 {
@@ -102,6 +123,9 @@ init_list (void)
 {
 	struct processList* list = create_list();
 	list->count = 0;
+	list->high_prio_procs = 0;
+	list->low_prio_procs = 0;
+	list->special_prio_procs = 0;
 	list->head = NULL;
 	return list;
 }
@@ -111,6 +135,20 @@ static void
 add_proc_to_list (struct processList* list, struct process* proc)
 {
 	list->count +=1;
+	switch (proc->prio) {
+		case LOW:
+		list->low_prio_procs++;
+		break;
+
+		case HIGH:
+		list->high_prio_procs++;
+		break;
+
+		case SPECIAL:
+		list->special_prio_procs++;
+		break;
+	}
+
 	if(list->head == NULL)
 		list->head = proc;
 	else {
@@ -126,10 +164,24 @@ static void
 remove_proc_from_list (struct processList* list, struct process* proc)
 {
 	struct process* temp = list->head;
-	struct process* prev = NULL;
+	struct process* prev = list->head;
 	list->count -= 1;
 
-	if (list->head == proc)
+	switch (proc->prio) {
+		case LOW:
+		list->low_prio_procs--;
+		break;
+
+		case HIGH:
+		list->high_prio_procs--;
+		break;
+
+		case SPECIAL:
+		list->special_prio_procs--;
+		break;
+	}
+
+	if (list->count == 0)
 		list->head = NULL;
 	else {
 		while(temp != proc) {
@@ -148,15 +200,61 @@ find_process_by_id (struct processList* list, int id)
 {
 	struct process* temp = list->head;
 
-	while(temp->pNumber != id)
+	while(temp!= NULL && temp->pNumber != id)
 		temp = temp->next;
 
-	if(temp == NULL) {
-		printf("ID %d not found! Program Error! Terminating...\n", id);
-		exit(1);
-	}
+	return temp;
+}
+
+static struct process*
+find_process_by_priority(struct processList* list, int priority)
+{
+
+	struct process* temp = list->head;
+
+	while(temp != NULL && temp->prio != priority )
+		temp = temp->next;
 
 	return temp;
+}
+
+static void
+move_process_to_position (struct processList* list,
+	 struct process* proc, int pos)
+{
+	struct process* temp = list->head;
+	struct process* prev = NULL;
+	int i;
+
+	if (temp != proc) {
+		while(temp != proc) {
+			prev = temp;
+			temp = temp->next;
+		}
+
+		prev->next = temp->next;
+		}
+	else {
+		list->head = temp->next;
+	}
+	temp = list->head;
+
+	if (pos == 0) {
+		printf("HELLo");
+		proc->next = temp;
+		list->head = proc;
+	}
+
+	else {
+		for (i = 1; i <= pos; i++) {
+			prev = temp;
+			temp = temp->next;
+		}
+
+
+		prev->next = proc;
+		proc->next = temp;
+	}
 }
 
 /* Print a list of all tasks currently being scheduled.  */
@@ -164,20 +262,42 @@ static void
 sched_print_tasks(void)
 {
 	struct process* temp = procList->head;
+	char*  priority;
 
 	printf("processes running: %d\n", procList->count);
 
+
 	while(temp != NULL) {
+
+		switch (temp->prio) {
+			case LOW:
+			priority = "LOW";
+			break;
+
+			case HIGH:
+			priority = "HIGH";
+			break;
+
+			case SPECIAL:
+			priority = "SPECIAL";
+			break;
+
+			default:
+			printf("Error in printing task priorities! Exiting...\n");
+			exit(1);
+		}
+
 		if (temp == current) {
 			printf("Currently running: \n");
 		}
 
 		printf("process ID: %d, "
 			   "process PID: %ld, "
-		   	   "executable name: %s\n",
-			   temp->pNumber, (long)temp->pPid, temp->execName);
+		   	   "executable name: %s "
+			   "priority: %s\n",
+			   temp->pNumber, (long)temp->pPid, temp->execName, priority);
 
-			   temp = temp->next;
+		temp = temp->next;
 	}
 }
 
@@ -188,12 +308,16 @@ static int
 sched_kill_task_by_id(int id)
 {
 	struct process* temp = find_process_by_id(procList, id);
-	kill(temp->pPid, SIGKILL);
 
-	exceptions[0] = true;
-	exceptionsID[0] = temp->pNumber;
+	if (temp != NULL) {
+		kill(temp->pPid, SIGKILL);
 
-	return -ENOSYS;
+		exceptions[0] = true;
+		exceptionsID[0] = temp->pNumber;
+		return 0;
+	}
+	else
+		return -ENOSYS;
 }
 
 
@@ -228,6 +352,130 @@ sched_create_task(char *executable)
 
 }
 
+static int
+sched_make_task_high_prio(int id)
+{
+
+	struct process* temp;
+
+	temp = find_process_by_id(procList, id);
+
+	if (temp == NULL)
+		return -ENOSYS;
+
+	if (temp->prio == HIGH) {
+		return 0;
+	}
+
+	else if (temp->prio == SPECIAL) {
+
+		char response[2];
+		bool flag = false;
+
+		printf("Are you sure you want to make the shell high priority?\n"
+				"This could cause starvation issues! (y/n)\n");
+
+		while (flag == false) {
+
+			fflush(stdout);
+
+			if (fgets(response, sizeof response, stdin) == NULL) {
+			        printf("Input error.\n");
+			        exit(1);
+			    }
+
+			if (response[0] == 'n' || response[0] == 'y')
+				flag = true;
+
+			else
+				printf("Please respond with y or n!\n");
+		}
+		if (response[0] == 'n')
+		 	return 0;
+	}
+
+
+
+	if (temp->prio == SPECIAL)
+		procList->special_prio_procs--;
+	if (temp->prio == LOW)
+		procList->low_prio_procs--;
+
+
+	temp->prio = HIGH;
+	procList->high_prio_procs++;
+
+	if (procList->high_prio_procs - 1 == 0) {
+		move_process_to_position(procList, temp, 0);
+		sched_print_tasks();
+		temp = find_process_by_priority(procList, SPECIAL);
+		printf("D");
+		if (temp != NULL) {
+			move_process_to_position(procList, temp, 1);
+
+		}
+	}
+	else {
+		move_process_to_position (procList,	temp, 0);
+	}
+return 0;
+}
+
+static int
+sched_make_task_low_prio(int id)
+{
+
+	struct process* temp;
+
+	temp = find_process_by_id(procList, id);
+
+	if (temp == NULL)
+		return -ENOSYS;
+
+	if (temp->prio == LOW)
+		return 0;
+
+	else if (temp->prio == SPECIAL) {
+
+		char response[2];
+		bool flag = false;
+
+		printf("Are you sure you want to make the shell high priority?\n"
+				"This could cause starvation issues! (y/n)\n");
+
+		while (flag == false) {
+
+			fflush(stdout);
+
+			if (fgets(response, sizeof response, stdin) == NULL) {
+					printf("Input error.\n");
+					exit(1);
+				}
+
+			if (response[0] == 'n' || response[0] == 'y')
+			flag = true;
+
+			else
+				printf("Please respond with y or n!\n");
+		}
+		if (response[0] == 'n')
+		 	return 0;
+	}
+
+
+	if (temp->prio == SPECIAL)
+		procList->special_prio_procs--;
+	if (temp->prio == HIGH)
+		procList->high_prio_procs--;
+
+	temp->prio = LOW;
+	procList->low_prio_procs++;
+
+	move_process_to_position (procList,
+		temp, procList->count - 1);
+	return 0;
+}
+
 /* Process requests by the shell.  */
 static int
 process_request(struct request_struct *rq)
@@ -243,6 +491,12 @@ process_request(struct request_struct *rq)
 		case REQ_EXEC_TASK:
 			sched_create_task(rq->exec_task_arg);
 			return 0;
+
+		case REQ_HIGH_TASK:
+			return sched_make_task_high_prio(rq->task_arg);
+
+		case REQ_LOW_TASK:
+			return sched_make_task_low_prio(rq->task_arg);
 
 		default:
 			return -ENOSYS;
@@ -327,32 +581,26 @@ sigchld_handler(int signum)
 					printf("All children finished. Exiting...\n");
 					exit(EXIT_SUCCESS);
 				}
-				if(current == NULL)
-						current = procList->head;
-
-				/* start alarm */
-				if (alarm(SCHED_TQ_SEC) < 0) {
-					perror("alarm");
-					exit(1);
-				}
-
-				kill(current->pPid, SIGCONT);
 			}
 		}
 		if (WIFSTOPPED(status)) {
 				/* A child has stopped due to SIGSTOP/SIGTSTP, etc... */
 				current = current->next;
-				if (current == NULL)
-					current = procList->head;
-
-					/* start alarm */
-				//	printf("%d\n", current->pNumber);
-					if (alarm(SCHED_TQ_SEC) < 0) {
-						perror("alarm");
-						exit(1);
 				}
-			kill(current->pPid, SIGCONT);
+
+		if(current == NULL)
+				current = procList->head;
+
+		if(procList->high_prio_procs > 0 && current->prio == LOW)
+			current = procList->head;
+
+		/* start alarm */
+		if (alarm(SCHED_TQ_SEC) < 0) {
+			perror("alarm");
+			exit(1);
 		}
+
+		kill(current->pPid, SIGCONT);
 	}
 }
 
@@ -555,6 +803,7 @@ int main(int argc, char *argv[])
 	/* Add the shell to the scheduler's tasks */
 	current = init_process(i, SHELL_EXECUTABLE_NAME);
 	current->pPid = p;
+	current->prio = SPECIAL;
 	add_proc_to_list(procList, current);
 
 
