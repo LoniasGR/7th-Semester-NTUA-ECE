@@ -34,21 +34,11 @@
 
 /* A virtual kindergarten */
 struct kgarten_struct {
-	/*
-	 * Here you may define any mutexes / condition variables / other variables
-	 * you may need.
-	 */
 
 	pthread_cond_t teacher_out;
 	pthread_cond_t child_in;
 	int count;
-	/* ... */
 
-	/*
-	 * You may NOT modify or use anything in the structure below this
-	 * point. They are only meant to be used by the framework code,
-	 * for verification.
-	 */
 	int vt;
 	int vc;
 	int ratio;
@@ -64,7 +54,8 @@ struct thread_info_struct {
 	pthread_t tid; /* POSIX thread id, as returned by the library */
 
 	struct kgarten_struct *kg;
-	int is_child;  /* Nonzero if this thread simulates children, zero otherwise */
+	int is_child;
+	 /* Nonzero if this thread simulates children, zero otherwise */
 
 	int thrid;     /* Application-defined thread id */
 	int thrcnt;
@@ -383,8 +374,6 @@ int main(int argc, char *argv[])
 		perror_pthread(ret, "pthread_mutex_init");
 		exit(1);
 	}
-
-	/* ... */
 
 	/*
 	 * Create threads
