@@ -63,10 +63,12 @@ double ystep;
 
 
 
-void reset_color_and_exit (int sig) {
+void reset_color_and_exit (int sig)
+{
 	reset_xterm_color(1);
 	exit(EXIT_FAILURE);
 }
+
 /*
  * This function computes a line of output
  * as an array of x_char color values.

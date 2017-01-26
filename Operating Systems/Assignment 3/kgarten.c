@@ -5,8 +5,8 @@
  * Bad things happen if teachers and children
  * are not synchronized properly.
  *
- * 
- * Author: 
+ *
+ * Author:
  * Vangelis Koukis <vkoukis@cslab.ece.ntua.gr>
  *
  * Additional Authors:
@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-/* 
+/*
  * POSIX thread functions do not return error numbers in errno,
  * but in the actual return value of the function call instead.
  * This macro helps with error reporting in this case.
@@ -34,17 +34,20 @@
 
 /* A virtual kindergarten */
 struct kgarten_struct {
-
-	/* 
+	/*
 	 * Here you may define any mutexes / condition variables / other variables
 	 * you may need.
 	 */
 
+	pthread_cond_t teacher_out;
+	pthread_cond_t child_in;
+	int count;
 	/* ... */
 
 	/*
-	 * You may NOT modify anything in the structure below this
-	 * point. 
+	 * You may NOT modify or use anything in the structure below this
+	 * point. They are only meant to be used by the framework code,
+	 * for verification.
 	 */
 	int vt;
 	int vc;
@@ -158,8 +161,23 @@ void child_enter(struct thread_info_struct *thr)
 
 	fprintf(stderr, "THREAD %d: CHILD ENTER\n", thr->thrid);
 
+	int c = thr->kg->vc;
+	int t = thr->kg->vt;
+	int r = thr->kg->ratio;
+
+
 	pthread_mutex_lock(&thr->kg->mutex);
+
+	while ( thr->kg->count == 0 ) {
+		pthread_cond_wait(&thr->kg->child_in, &thr->kg->mutex);
+	}
+
 	++(thr->kg->vc);
+	--(thr->kg->count);
+
+	if ( (t-1) * r >= c ) pthread_cond_broadcast(&thr->kg->teacher_out);
+	if ( thr->kg->count > 0 ) pthread_cond_broadcast(&thr->kg->child_in);
+
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
 
@@ -173,9 +191,19 @@ void child_exit(struct thread_info_struct *thr)
 	}
 
 	fprintf(stderr, "THREAD %d: CHILD EXIT\n", thr->thrid);
-	
+
+	int c = thr->kg->vc;
+	int t = thr->kg->vt;
+	int r = thr->kg->ratio;
+
 	pthread_mutex_lock(&thr->kg->mutex);
+
 	--(thr->kg->vc);
+	++(thr->kg->count);
+
+	if ( (t-1) * r >= c ) pthread_cond_broadcast(&thr->kg->teacher_out);
+	if ( thr->kg->count > 0 ) pthread_cond_broadcast(&thr->kg->child_in);
+
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
 
@@ -189,8 +217,19 @@ void teacher_enter(struct thread_info_struct *thr)
 
 	fprintf(stderr, "THREAD %d: TEACHER ENTER\n", thr->thrid);
 
+
+	int c = thr->kg->vc;
+	int t = thr->kg->vt;
+	int r = thr->kg->ratio;
+
 	pthread_mutex_lock(&thr->kg->mutex);
+
 	++(thr->kg->vt);
+	thr->kg->count += r;
+
+	if ( (t-1) * r >= c ) pthread_cond_broadcast(&thr->kg->teacher_out);
+	if ( thr->kg->count > 0 ) pthread_cond_broadcast(&thr->kg->child_in);
+
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
 
@@ -204,8 +243,23 @@ void teacher_exit(struct thread_info_struct *thr)
 
 	fprintf(stderr, "THREAD %d: TEACHER EXIT\n", thr->thrid);
 
+	int c = thr->kg->vc;
+	int t = thr->kg->vt;
+	int r = thr->kg->ratio;
+
 	pthread_mutex_lock(&thr->kg->mutex);
+
+	while ( (t-1) * r < c ) {
+		pthread_cond_wait(&thr->kg->teacher_out, &thr->kg->mutex );
+	}
+
 	--(thr->kg->vt);
+	thr->kg->count -= r;
+
+
+	if ( (t-1) * r >= c ) pthread_cond_broadcast(&thr->kg->teacher_out);
+	if ( thr->kg->count > 0 ) pthread_cond_broadcast(&thr->kg->child_in);
+
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
 
@@ -231,7 +285,7 @@ void verify(struct thread_info_struct *thr)
 }
 
 
-/* 
+/*
  * A single thread.
  * It simulates either a teacher, or a child.
  */
@@ -242,7 +296,7 @@ void *thread_start_fn(void *arg)
 	char *nstr;
 
 	fprintf(stderr, "Thread %d of %d. START.\n", thr->thrid, thr->thrcnt);
-	
+
 	nstr = thr->is_child ? "Child" : "Teacher";
 	for (;;) {
 		fprintf(stderr, "Thread %d [%s]: Entering.\n", thr->thrid, nstr);
@@ -250,7 +304,7 @@ void *thread_start_fn(void *arg)
 			child_enter(thr);
 		else
 			teacher_enter(thr);
-	
+
 		fprintf(stderr, "Thread %d [%s]: Entered.\n", thr->thrid, nstr);
 
 		/*
@@ -284,7 +338,7 @@ void *thread_start_fn(void *arg)
 	}
 
 	fprintf(stderr, "Thread %d of %d. END.\n", thr->thrid, thr->thrcnt);
-	
+
 	return NULL;
 }
 
@@ -315,13 +369,14 @@ int main(int argc, char *argv[])
 
 
 	/*
-	 * Initialize kindergarten and random number generator 
+	 * Initialize kindergarten and random number generator
 	 */
 	srand(time(NULL));
 
 	kg = safe_malloc(sizeof(*kg));
 	kg->vt = kg->vc = 0;
 	kg->ratio = ratio;
+	kg->count = 0;
 
 	ret = pthread_mutex_init(&kg->mutex, NULL);
 	if (ret) {
