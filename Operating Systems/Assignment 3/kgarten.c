@@ -266,7 +266,7 @@ void verify(struct thread_info_struct *thr)
         t = kg->vt;
         r = kg->ratio;
 
-        fprintf(stderr, "            Thread %d: Teachers: %d, Children: %d\n",
+        fprintf(stderr, " Thread %d: Teachers: %d, Children: %d\n",
                 thr->thrid, t, c);
 
         if (c > t * r) {
