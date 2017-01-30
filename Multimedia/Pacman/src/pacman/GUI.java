@@ -3,6 +3,7 @@ package pacman;
 
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -24,10 +25,11 @@ public class GUI {
     private static JPanel topPanel;
     private static JPanel scorePanel;
     private static JPanel highScorePanel;
-    private static JPanel gamePanel;
     private static JPanel bottomPanel;
     private static JPanel livesPanel;
     private static JPanel gameControlsPanel;
+    
+    private static GamePanel gamePanel;
     
     private static JLabel score;
     private static JLabel highScore;
@@ -42,6 +44,8 @@ public class GUI {
     private static GridBagConstraints highScoreConstr;
     private static GridBagConstraints livesLabelConstr;
     private static GridBagConstraints livesConstr;
+    private static GridBagConstraints pauseConstr;
+    private static GridBagConstraints startConstr;
     
     private static BufferedImage livesImage;
     
@@ -67,6 +71,13 @@ public class GUI {
         livesConstr = new GridBagConstraints();
         livesConstr.gridx = 1;
         livesConstr.insets = new Insets (0, 10, 0, 0);
+        
+        pauseConstr = new GridBagConstraints();
+        pauseConstr.insets = new Insets (0, 0, 0, 25);
+        
+        startConstr = new GridBagConstraints();
+        startConstr.gridy = 1;
+        startConstr.insets = new Insets (0, 0, 0, 25);
        
         try {
             livesImage = ImageIO.read(new File("PMright3.gif"));
@@ -84,6 +95,7 @@ public class GUI {
     private void organiseGUI () {
         window = new JFrame("MediaLab Pac-Man");
         window.setLayout(new BorderLayout());
+
         
         window.add(topPanel = new JPanel(), BorderLayout.PAGE_START);
         topPanel.setLayout(new BorderLayout());
@@ -96,7 +108,7 @@ public class GUI {
         highScorePanel.add(new JLabel("High Score"), highScoreLabelConstr);
         highScorePanel.add(highScore = new JLabel("0"), highScoreConstr);
         
-        window.add(gamePanel = new JPanel(), BorderLayout.CENTER);
+        window.add(gamePanel = new GamePanel(), BorderLayout.CENTER);
         gamePanel.setLayout(new GridLayout(22, 19));
         
         window.add(bottomPanel = new JPanel(), BorderLayout.PAGE_END);
@@ -111,18 +123,26 @@ public class GUI {
         bottomPanel.add(gameControlsPanel = new JPanel(),
                 BorderLayout.LINE_END);
         
-        //TODO Fix Layout
-        gameControlsPanel.setLayout(new GridLayout(2, 1));
-        gameControlsPanel.add(start = new JButton("Start"));
-        gameControlsPanel.add(pause = new JButton("Pause"));
+        //TODO: Fix Layout
+        gameControlsPanel.setLayout(new GridBagLayout());
+        start = new JButton("Start");
+        start.setPreferredSize(new Dimension(70, 25));
+        gameControlsPanel.add(start, startConstr);
+        pause = new JButton("Pause");
+        pause.setPreferredSize(new Dimension(70, 25));
+        gameControlsPanel.add(pause, pauseConstr);
         
     }
     
     private void createGUI() {
         window.setSize(600,800);
-        window.setLocationRelativeTo(null);
+        window.setLocationRelativeTo(null);       
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setVisible(true);
+    }
+    
+    public void createTerrain(char[][] terrain) {
+        
     }
     
     private void initializeButtons () {
