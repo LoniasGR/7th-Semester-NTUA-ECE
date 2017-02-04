@@ -6,20 +6,32 @@
 package pacman;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 
 /**
  *
  * @author Leonidas
  */
 public class Pacman {
-
+    
     private static GUI gui;
+
     /**
      * @param args the command line arguments
      * @throws java.io.IOException
      */
+    
     public static void main(String[] args) throws IOException {
-        gui = new GUI();
+       SwingUtilities.invokeLater(() -> {
+           try {
+               gui = new GUI("MediaLab Pac-Man");
+           } catch (IOException ex) {
+               Logger.getLogger
+                        (Pacman.class.getName()).log(Level.SEVERE, null, ex);
+           }
+       });
     }
     
 }
