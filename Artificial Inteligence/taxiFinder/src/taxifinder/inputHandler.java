@@ -42,17 +42,36 @@ public class inputHandler {
         scanner.close();
     }
     
-    public Customer getCustomerPosition() throws InputMismatchException, 
+    public Customer getCustomerInfo() throws InputMismatchException, 
             NoSuchElementException {
         String number;
         double [] coords = new double[2];
+        double [] dest_coords = new double[2];
+        String time = null; 
+        int persons = 0;
+        String language = null;
+        int luggage = 0;
+        
         try {
                 scanner.nextLine();
                 scanner.useDelimiter(",|\n");
                 number = scanner.next();
                 coords[0] = Double.parseDouble(number);
                 number = scanner.next();
-                 coords[1] = Double.parseDouble(number);
+                coords[1] = Double.parseDouble(number);
+                number = scanner.next();
+                dest_coords[0] = Double.parseDouble(number);
+                number = scanner.next();
+                dest_coords[1] = Double.parseDouble(number);
+                number = scanner.next();
+                time = number;
+                number = scanner.next();
+                persons = Integer.parseInt(number);
+                number = scanner.next();
+                language = number;
+                number = scanner.next();
+                luggage = Integer.parseInt(number);            
+                 
         }
         catch (InputMismatchException e) {
                 System.out.println("Incompatible Input File!");
@@ -62,7 +81,8 @@ public class inputHandler {
             System.out.println("Incomplete File");
             System.exit(1);
         } 
-        Customer client = new Customer(coords[0], coords[1]);
+        Customer client = new Customer(coords[0], coords[1],
+        dest_coords[0], dest_coords[1], time, persons, language, luggage);
         return client;
     }
     

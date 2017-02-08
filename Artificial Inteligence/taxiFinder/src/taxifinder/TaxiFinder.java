@@ -37,7 +37,7 @@ public class TaxiFinder {
         handler = new inputHandler("taxis.csv");
         taxis = handler.getTaxisPosition();
         handler = new inputHandler("client.csv");
-        client = handler.getCustomerPosition();
+        client = handler.getCustomerInfo();
         handler = new inputHandler("nodes.csv");
         nodeList = handler.createGraph();
         findSameStreetNodes(nodeList);

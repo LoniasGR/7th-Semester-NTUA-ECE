@@ -60,3 +60,4 @@ Module.symvers
 Mkfile.old
 dkms.conf
 /Multimedia/Pacman/nbproject/private/
+/Prolog Example/nbproject/private/
