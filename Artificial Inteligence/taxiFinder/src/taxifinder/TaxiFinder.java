@@ -15,13 +15,21 @@ public class TaxiFinder {
  * of the graph for faster traversal. Main just binds all classes together.
  */    
     private static ArrayList<Taxi> taxis;
+    
     private static Customer client;
+    
     private static ArrayList<Node> nodeList;
+    
+    private static ArrayList<Line> lineList;
+    
+    private static ArrayList<Traffic> trafficList;
+    
     private static Node customerNode;
     private static Node taxiNode;
     private static ArrayList<Result> results;
     private static Result bestResult;
     private static Taxi mostSuitableTaxi;
+    private static Heuristics heuristic;
     /**
      * Main starts by calling the inputHandler class methods, then creates
      * the graph using TaxiFinder class methods and finally using Astar class 
@@ -31,34 +39,60 @@ public class TaxiFinder {
      */
     public static void main(String[] args) throws FileNotFoundException, 
             Exception {
+        
         bestResult = new Result(null, Double.MAX_VALUE);
+        
         mostSuitableTaxi = null;
+        
         inputHandler handler;
+        
         handler = new inputHandler("taxis.csv");
-        taxis = handler.getTaxisPosition();
+        taxis = handler.getTaxisInformation();
+        
         handler = new inputHandler("client.csv");
         client = handler.getCustomerInfo();
+        
         handler = new inputHandler("nodes.csv");
         nodeList = handler.createGraph();
-        findSameStreetNodes(nodeList);
+        
+        handler = new inputHandler("lines.csv");
+        lineList = handler.getLineInfo();
+        
+        handler = new inputHandler("traffic.csv");
+        trafficList = handler.getTrafficInfo();
+        
+        heuristic = new Heuristics();
+        addInformationToProlog();
+        
+        connectTrafficWithLine(lineList, trafficList);
+        
+        findSameStreetNodes(nodeList, lineList);
+        
+       
         ArrayList<Node> nodeList2 = new ArrayList<>(nodeList);
         Collections.sort(nodeList2, new CoordinatesComparator());
-        findIdenticalNodes(nodeList2);         
+        findIdenticalNodes(nodeList2); 
+        
         results = new ArrayList<>();
         customerNode = 
                 Astar.findNodeClosestToClient(client, nodeList);
         for (Taxi taxi: taxis) {
-            Result currentResult;
-            taxiNode = Astar.findNodeClosestToTaxi(taxi, nodeList);
-            currentResult = Astar.AstarAlgorithm
-                    (taxiNode, customerNode, nodeList);
-            Astar.clearPaths(nodeList);
-            
-            if (!(currentResult == null)) {
-                results.add(currentResult);
-                if (bestResult.getDistance() > currentResult.getDistance()) {
-                    bestResult = currentResult;
-                    mostSuitableTaxi = taxi;
+            if (!heuristic.checkCompatibility(taxi.getId()))
+                continue;
+            else {
+                Result currentResult;
+                taxiNode = Astar.findNodeClosestToTaxi(taxi, nodeList);
+                currentResult = Astar.AstarAlgorithm
+                        (taxiNode, customerNode, nodeList);
+                Astar.clearPaths(nodeList);
+
+                if (!(currentResult == null)) {
+                    results.add(currentResult);
+                    if (bestResult.getDistance() > currentResult.getDistance())
+                    {
+                        bestResult = currentResult;
+                        mostSuitableTaxi = taxi;
+                    }
                 }
             }
         }
@@ -72,17 +106,27 @@ public class TaxiFinder {
     }
 
 /**
- * Finds the nodes that are in the same street and are neighbours.
+ * Finds the nodes that are in the same street and are neighbors.
  * The concept is that if a node follows another in a file and they
- * are from the same street, then they are neighbours.
+ * are from the same street, then they are neighbors.
  * @param list is the list of the nodes.
+ * @param lineList
  */
-public static void findSameStreetNodes (ArrayList<Node> list) {
+public static void findSameStreetNodes (ArrayList<Node> list,
+        ArrayList<Line> lineList) {
         Node tempNode;
         Node tempNode2 = list.get(0);
+        Line tempLine;
+        
         for(int i = 1; i < list.size() ; i++ ) {
             tempNode = list.get(i);
-            if (tempNode2.getId() == tempNode.getId()) {
+            for (Line lineList1 : lineList) {
+                if (tempNode.getLine_id() == lineList1.getLine_id()) {
+                    tempLine = lineList1;
+                    break;
+                }
+            }
+            if (tempNode2.getLine_id() == tempNode.getLine_id()) {
                 tempNode2.AddToAdjacencyList(tempNode);
                 tempNode.AddToAdjacencyList(tempNode2);
                 tempNode2 = tempNode;
@@ -129,6 +173,31 @@ public static void findSameStreetNodes (ArrayList<Node> list) {
                        tempList.add(tempNode);
                 }
             }
+        }
+    }
+    
+    static void connectTrafficWithLine (ArrayList<Line> lineList, 
+            ArrayList<Traffic> trafficList) {
+        
+        for (Line lineList1 : lineList) {
+            for (Traffic trafficList1: trafficList) {
+                if (lineList1.getLine_id() == trafficList1.getLine_id()) {
+                    lineList1.addTrafficInfo(trafficList1);
+                    break;
+                }
+            }
+        }    
+    }
+    
+    static void addInformationToProlog () {
+        heuristic.AddAssertion(client.translateInfoToProlog());
+         for(Taxi taxi1 : taxis) {
+            String [] languages = taxi1.getLanguages();
+            int id = taxi1.getId();
+             for (String language : languages) {
+                 heuristic.AddAssertion("language("+taxi1.getId()+","+language+")");
+             }
+            heuristic.AddAssertion(taxi1.translateInfoToProlog());
         }
     }
 }

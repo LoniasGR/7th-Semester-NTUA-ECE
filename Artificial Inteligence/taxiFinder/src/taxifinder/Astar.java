@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class Astar {
+    
+    
+    
     /**
      * Finds the Eukledian Distance between two nodes.
      * Uses EukledianDistance method.
@@ -78,6 +81,9 @@ public class Astar {
         return result;
     }
    
+    
+    
+    
     /**
      * Finds nodes that are Equal in their position.
      * @param a node 1
@@ -88,6 +94,10 @@ public class Astar {
         return (a.getX_axis() == b.getX_axis() 
                 && a.getY_axis() == b.getY_axis());
     } 
+    
+    
+    
+    
     /**
      * The algorithm used can be found on wikipedia
      * link: <a href="https://en.wikipedia.org/wiki/A*_search_algorithm">

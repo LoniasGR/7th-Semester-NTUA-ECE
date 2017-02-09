@@ -11,6 +11,7 @@ public class Node {
     
     private final double X_axis;
     private final double Y_axis;
+    private final int line_id;
     private final int id;
     private final String streetName;
     private ArrayList<Node> adjacencyList;
@@ -18,21 +19,28 @@ public class Node {
     private double gscore;
     private Node cameFrom;
     
+    private Line line;
+    
     /**
      * 
      * @param X_axis is the X axis position of the node
      * @param Y_axis is the Y axis position of the node
+     * @param line_id is the id of the road
      * @param id is the node's ID
      * @param streetName is the street Name of the node (if it exists)
      */
-    public Node(double X_axis, double Y_axis, int id, String streetName) {
+    public Node(double X_axis, double Y_axis, int line_id,
+            int id, String streetName) {
         this.adjacencyList = new ArrayList<>();
         this.X_axis = X_axis;
         this.Y_axis = Y_axis;
+        this.line_id = line_id;
         this.id = id;
         this.streetName = streetName;
         this.fscore = Double.MAX_VALUE;
         this.gscore = Double.MAX_VALUE;
+        
+        this.line = null;
     }
     
     /**
@@ -43,6 +51,7 @@ public class Node {
         this.X_axis = node.getX_axis();
         this.Y_axis = node.getY_axis();
         this.id = node.getId();
+        this.line_id = node.getLine_id();
         this.streetName = node.getStreetName();
     }
     
@@ -75,6 +84,10 @@ public class Node {
     public int getId() {
         return id;
     }
+    
+     public int getLine_id() {
+        return line_id;
+    }
 
     public String getStreetNames() {
         return streetName;
@@ -83,6 +96,10 @@ public class Node {
     public ArrayList<Node> getAdjacencyList() {
         return adjacencyList;
     }  
+    
+    public Line getLine () {
+        return line;
+    }
     
     public void RecreateAdjacencyList(ArrayList<Node> list) {
         this.adjacencyList = list;
@@ -101,6 +118,10 @@ public class Node {
     
     public void SetCamefrom (Node node) {
         this.cameFrom = node;
+    }
+    
+    public void connectLine (Line l) {
+        this.line = l;
     }
     
    }

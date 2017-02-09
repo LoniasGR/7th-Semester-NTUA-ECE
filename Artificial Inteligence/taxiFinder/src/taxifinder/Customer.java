@@ -10,18 +10,19 @@ public class Customer {
     /**
      * @param X_axis is the longitude of the location of the customer
      * @param Y_axis is the latitude of the location of the customer
+     * @param time is given in a military format like 1430 or 420.
      */
     
     private final double X_axis;
     private final double Y_axis;
     private final double dest_X_axis;
     private final double dest_Y_axis;
-    private final String time;
+    private final int time;
     private final int persons;
     private final String language;
     private final int luggage;
 
-    public String getTime() {
+    public int getTime() {
         return time;
     }
 
@@ -60,10 +61,19 @@ public class Customer {
         this.Y_axis = Y_axis;
         this.dest_X_axis = dest_X_axis;
         this.dest_Y_axis = dest_Y_axis;
-        this.time = time;
+        String [] parts = time.split(":");
+        this.time = Integer.parseInt(parts[0]) * 100 + 
+                Integer.parseInt(parts[1]);
         this.persons = persons;
         this.language = language;
         this.luggage = luggage;
+    }
+    
+    public String translateInfoToProlog () {
+        String s = "client("+X_axis+","+Y_axis+","+dest_X_axis+","+dest_Y_axis+
+                ","+time+","+persons+","+language+","+luggage+")";
+        
+        return s;
     }
     
     
