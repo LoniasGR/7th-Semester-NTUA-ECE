@@ -6,7 +6,6 @@
 package taxifinder;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  *

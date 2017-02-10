@@ -56,4 +56,9 @@ public class Heuristics {
         
         return jipQuery.nextSolution() != null;   
     }
+    
+    public int checkHfunc (Node current, Node next, Node goal) {
+        
+        return ;
+    }
 }

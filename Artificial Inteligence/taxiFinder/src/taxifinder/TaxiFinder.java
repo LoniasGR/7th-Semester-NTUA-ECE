@@ -224,5 +224,14 @@ public static void findSameStreetNodes (ArrayList<Node> list,
                 }
             }
         }
+        
+        for(Line line : lineList) {
+            int id = line.getLine_id();
+            boolean oneway = line.isOneway();
+            boolean oneway_direction = line.isOneway_direction();
+            
+            heuristic.AddAssertion("oneway(" + id + "," + oneway + "," + 
+                    oneway_direction + ")");
+        }
     }
 }

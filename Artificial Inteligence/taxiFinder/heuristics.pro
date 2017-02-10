@@ -5,11 +5,7 @@ correctCap(X, Y, Z) :-
 distance(X1,Y1,X2,Y2, D) :-
     D is sqrt((X2-X1)^2 + (Y2-Y1)^2).
 
-longdistance(D, true) :-
-    D >= 30.0.
-
-longdistance(D, true)  :-
-    D =< 30.0.
+longdistance(D, true) .
 
 longdistance(D, false) :-
     D =< 30.0.

@@ -5,8 +5,6 @@
  */
 package taxifinder;
 
-import java.util.Arrays;
-
 public class Taxi {
     
     private final double X_axis;
