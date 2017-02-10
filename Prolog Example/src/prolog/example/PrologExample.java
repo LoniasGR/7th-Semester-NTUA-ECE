@@ -34,6 +34,8 @@ public class PrologExample {
 		JIPQuery jipQuery; 
 		JIPTerm term;
 		
+                jipQuery = jip.openSynchronousQuery(parser.parseTerm("assert(li("+x+","+y+"))."));
+                System.out.println(jipQuery.nextSolution());
 		System.out.println("CASE 1");
 		jipQuery = jip.openSynchronousQuery(parser.parseTerm
         ("likes(" + x + "," + y + ")."));

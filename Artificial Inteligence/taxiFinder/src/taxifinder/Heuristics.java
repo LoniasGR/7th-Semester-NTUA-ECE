@@ -23,7 +23,7 @@ public class Heuristics {
     private JIPEngine jip;
     private JIPTermParser Tparser;
     private JIPFunctor functor;
-    private JIPQuery q;
+    private JIPQuery jipQuery;
     private JIPTerm term;
     
     public Heuristics () throws JIPSyntaxErrorException, IOException {
@@ -41,14 +41,19 @@ public class Heuristics {
         }
     }
  
-    public void AddAssertion (String s) {      
-        System.out.println(s);
-        q = jip.openSynchronousQuery(Tparser.parseTerm("assert(+s+)."));
-        q.nextSolution();
+    public void AddAssertion (String s) {
+        
+        jipQuery = 
+                jip.openSynchronousQuery(Tparser.parseTerm("assert("+s+")."));
+        jipQuery.nextSolution();
     }
     
-    public boolean checkCompatibility (int id) {
+    public boolean checkCompatibility (Taxi taxi, Customer client) {
+        String s = "compatible(" +taxi.translateInfoToProlog() + 
+                "," + client.translateInfoToProlog()+").";
         
+        jipQuery = jip.openSynchronousQuery(Tparser.parseTerm(s));
         
+        return jipQuery.nextSolution() != null;   
     }
 }

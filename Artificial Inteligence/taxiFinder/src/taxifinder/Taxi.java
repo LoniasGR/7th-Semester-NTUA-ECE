@@ -92,7 +92,7 @@ public class Taxi {
     
     public String translateInfoToProlog () {
         String s = "taxi(" + X_axis + "," + Y_axis + "," + id + "," + available
-                + "." + min_capacity + "," + max_capacity + "," + 
+                + "," + min_capacity + "," + max_capacity + "," + 
                 rating + "," + long_distance + "," + type +")";
         return s;
     }

@@ -12,9 +12,8 @@ import java.util.Comparator;
  */
 public class CoordinatesComparator implements Comparator<Node> {
 @Override
-public int compare(Node a, Node b) {
-    return a.getX_axis() < b.getX_axis() ? -1 : a.getX_axis() == b.getX_axis() 
-            ? 0 : 1;
-}    
-    
+    public int compare(Node a, Node b) {
+        return a.getX_axis() < b.getX_axis() ? -1 : a.getX_axis() == b.getX_axis() 
+                ? 0 : 1;
+    }        
 }

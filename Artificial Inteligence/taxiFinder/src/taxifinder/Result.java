@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public class Result {
     private final  ArrayList<Node> path;
     private double distance;
+    private Taxi taxi;
     
     public Result (ArrayList<Node> path, double distance) {
         this.path = path;
@@ -40,4 +41,11 @@ public class Result {
         return this.path.get(i);
     }
     
+    public void addTaxi (Taxi t) {
+        this.taxi = t;
+    }
+    
+    public Taxi getTaxi () {
+        return this.taxi;
+    }
 }

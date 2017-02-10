@@ -9,20 +9,25 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 public class outputHandler {
     /**
      * Writes to a KML file all the taxi routes 
-     * Optimal route is written in blue, while all the others in red
+     * Optimal route is written in blue, while all the others in red.
+     * TODO: add more parameters to the writing method.
      * @param bestResult is the best taxi route for the customer
      * @param results are all the other taxi routes
+     * @param name name of the file
      * @throws FileNotFoundException
-     * TODO: add more parameters to the writing method.
+     * 
      */
     
-    public static void writeToFile (Result bestResult,ArrayList<Result> results) 
+    public static void writeToFile (Result bestResult,List<Result> results,
+            String name) 
             throws FileNotFoundException {
-        PrintStream out = new PrintStream(new FileOutputStream ("map.kml"));
+        PrintStream out = new PrintStream(new FileOutputStream (name));
+        PrintStream original = System.out;
         System.setOut(out);
         System.out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "\t<kml xmlns=\"http://earth.google.com/kml/2.1\">\n" +
@@ -76,11 +81,28 @@ public class outputHandler {
             }
             System.out.println("\t</Document>\n" +
                 "</kml>");
-            
-                
-        
-        
-        
+            System.setOut(original);
     }
-   
+    
+    public static void printbestResultsByDistance (List<Result> results) {
+        System.out.println("The top five best results depending on distance "
+                + "we found were:\n"
+                + "(visual representation in map1.kml)");
+        for(int i = 0; i < 5; i ++) {
+            System.out.println(i+1 + 
+                    ":\tId: " + results.get(i).getTaxi().getId()
+                    + " Distance: " + results.get(i).getDistance());
+        }
+        System.out.println();
+    } 
+    
+    public static void printbestResultsByRating (List<Result> results) {
+        System.out.println("Top five taxi candidates rearanged by rating:\n"
+                + "(visual representation in map2.kml)");
+        for(int i = 0; i < 5; i ++) {
+            System.out.println(i+1 + " :\tId: " + 
+                    results.get(i).getTaxi().getId()
+                    + " Rating: " + results.get(i).getTaxi().getRating());
+        }
+    } 
 }

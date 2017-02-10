@@ -8,6 +8,7 @@ package taxifinder;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class TaxiFinder {
 /**
@@ -77,16 +78,15 @@ public class TaxiFinder {
         customerNode = 
                 Astar.findNodeClosestToClient(client, nodeList);
         for (Taxi taxi: taxis) {
-            if (!heuristic.checkCompatibility(taxi.getId()))
-                continue;
-            else {
+            if (heuristic.checkCompatibility(taxi, client)) {
                 Result currentResult;
                 taxiNode = Astar.findNodeClosestToTaxi(taxi, nodeList);
                 currentResult = Astar.AstarAlgorithm
-                        (taxiNode, customerNode, nodeList);
+                                (taxiNode, customerNode, nodeList);
                 Astar.clearPaths(nodeList);
 
                 if (!(currentResult == null)) {
+                    currentResult.addTaxi(taxi);
                     results.add(currentResult);
                     if (bestResult.getDistance() > currentResult.getDistance())
                     {
@@ -94,14 +94,24 @@ public class TaxiFinder {
                         mostSuitableTaxi = taxi;
                     }
                 }
-            }
+            } else continue;
         }
         if (results.isEmpty()) {
             System.out.println("No path to client found!");
         }
         else {
-            results.remove(bestResult);
-            outputHandler.writeToFile(bestResult, results);
+            Collections.sort(results, new ResultByDistanceComparator());
+            List<Result> bestResults = results.subList(0, 5);
+            outputHandler.printbestResultsByDistance(bestResults);
+            bestResults.remove(bestResult);
+            outputHandler.writeToFile(bestResult, bestResults, "map1.kml");
+            bestResults.add(bestResult);
+            Collections.sort(bestResults, new ResultByTaxiRatingComparator());
+            outputHandler.printbestResultsByRating(bestResults);
+            bestResults.remove(bestResult);
+            outputHandler.writeToFile(bestResult, bestResults, "map2.kml");
+            bestResults.add(bestResult);
+            
         }
     }
 
@@ -190,14 +200,29 @@ public static void findSameStreetNodes (ArrayList<Node> list,
     }
     
     static void addInformationToProlog () {
-        heuristic.AddAssertion(client.translateInfoToProlog());
-         for(Taxi taxi1 : taxis) {
+        for(Taxi taxi1 : taxis) {
             String [] languages = taxi1.getLanguages();
             int id = taxi1.getId();
              for (String language : languages) {
-                 heuristic.AddAssertion("language("+taxi1.getId()+","+language+")");
+                 heuristic.AddAssertion("language("+taxi1.getId() +
+                         "," + language+")");
              }
-            heuristic.AddAssertion(taxi1.translateInfoToProlog());
+        }
+        for(Traffic traffic : trafficList) {
+            ArrayList<TimeAndAmount> hours = traffic.getHoursAndTraffic();
+            if (hours == null)
+                continue;
+            else {
+                for (TimeAndAmount hour : hours) {
+                    int id = traffic.getLine_id();
+                    int srtH = hour.getStartingTime();
+                    int endH = hour.getEndingTime();
+                    String vol = hour.getAmount();
+
+                    heuristic.AddAssertion("traffic(" + id + "," + srtH + ","
+                          + endH + "," + vol + ")");
+                }
+            }
         }
     }
 }
