@@ -23,3 +23,33 @@ client(Cxax,Cyax,Cdxax,Cdyax,Time,P,Lang,Lug)) :-
     language(Id, L),
     correctCap(P, MinCap, MaxCap).
     checkLD(Xax,Yax,Cxax,Cyax,Cyax,Cdxax,Cdyax,LD).
+
+multiplier(D, low) :-
+    D is 1.
+
+multiplier(D, medium) :-
+    D is 1.5.
+
+multiplier(D,high) :-
+    D is 2.
+
+commonLine(Id1, Id2, Id) :-
+    belongsIn(Id1, Id),
+    belongsIn(Id2, Id).
+
+findDirection(Id,X1,X2, 1) :-
+    oneway(Id, false, false).
+
+findDirection(Id, X1, X2, 1) :-
+    X1 < X2,
+    oneway(Id, true, false).
+
+findDirection(Id, X1, X2, 1) :-
+    X1 >= X2,
+    oneway(Id, true, true).
+
+returnHeuristic(Id1,Id2, XN1,XN2,Y2, Xdst, Ydst, A, D) :-
+    commonLine(Id1, Id2, Id),
+    findDirection(Id, XN1, XN2, D),
+    highway(Id, true),
+    distance(XN2, Y2, Xdst, Ydst,A).

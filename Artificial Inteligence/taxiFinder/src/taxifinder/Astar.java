@@ -111,7 +111,7 @@ public class Astar {
      * @return 
      */
     public static Result AstarAlgorithm (Node start, Node goal,
-            ArrayList<Node> graph) {
+            ArrayList<Node> graph, Heuristics heuristic, int time) {
         ArrayList<Node> openSet = new ArrayList<>();
         ArrayList<Node> closedSet = new ArrayList<>();
         Node current = start;
@@ -140,7 +140,8 @@ public class Astar {
                 neighbour.SetCamefrom(current);
                 neighbour.SetGscore(tentativeGScore);
                 neighbour.SetFscore(neighbour.getGscore() + 
-                        Astar.EukledianDistanceBetweenNodes(neighbour, goal));
+                        heuristic.returnHeuristic(current, neighbour, 
+                                goal, time));
                 }
             
             }
@@ -174,4 +175,6 @@ public class Astar {
             list.get(i).SetCamefrom(null);
         }
     }  
+    
+    
 }

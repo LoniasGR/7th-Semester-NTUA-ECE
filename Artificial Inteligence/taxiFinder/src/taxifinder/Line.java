@@ -13,6 +13,10 @@ public class Line {
 
   
     private final int line_id;
+    private double lineStartX;
+    private double lineStartY;
+    private double lineEndX;
+    private double lineEndY;
     private final String highway;
     private final String name;
     private final boolean oneway;
@@ -40,6 +44,7 @@ public class Line {
              String railway, String boundary, boolean access, String natural,
              String barrier, boolean tunnel, boolean bridge, boolean incline,
              String waterway, boolean busway, boolean toll) {
+         
         this.line_id = line_id;
         this.highway = highway;
         this.name = name;
@@ -64,6 +69,16 @@ public class Line {
         
     }
      
+    public void add_lineStart (double X, double Y) {
+        this.lineStartX = X;
+        this.lineStartY = Y;
+    }
+    
+    public void add_lineEnd (double X, double Y) {
+        this.lineEndX = X;
+        this.lineEndY = Y;
+    }
+    
      public int getLine_id() {
         return line_id;
     }
@@ -138,6 +153,10 @@ public class Line {
 
     public boolean isToll() {
         return toll;
+    }
+    
+    public boolean isHighway() {
+        return !this.highway.equals("");
     }
     
     public void addTrafficInfo (Traffic t) {

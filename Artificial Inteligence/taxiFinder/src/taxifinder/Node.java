@@ -55,6 +55,10 @@ public class Node {
         this.streetName = node.getStreetName();
     }
     
+    public void addLine (Line l) {
+        this.line = l;
+    }
+    
     public String getStreetName() {
         return streetName;
     }

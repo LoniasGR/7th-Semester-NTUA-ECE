@@ -57,8 +57,23 @@ public class Heuristics {
         return jipQuery.nextSolution() != null;   
     }
     
-    public int checkHfunc (Node current, Node next, Node goal) {
+    public int returnHeuristic (Node current, Node neighbour, 
+            Node goal, int time) {
+        int Id1 = current.getId();
+        int Id2 = neighbour.getId();
+        double X1 = current.getX_axis();
+        double X2 = neighbour.getX_axis();
+        double Y2 = neighbour.getY_axis();
+        double Xdst = goal.getX_axis();
+        double Ydst = goal.getY_axis();
         
-        return ;
+        String s = "returnHeuristic(" + Id1 + "," + Id2 + "," + X1 + "," + X2 + 
+                "," + Y2 + "," + Xdst + "," + Ydst + ",A).";
+        
+        jipQuery = jip.openSynchronousQuery(Tparser.parseTerm(s));
+        JIPTerm str = jipQuery.nextSolution();
+        System.out.println(str);
+        
+        return 1;
     }
 }

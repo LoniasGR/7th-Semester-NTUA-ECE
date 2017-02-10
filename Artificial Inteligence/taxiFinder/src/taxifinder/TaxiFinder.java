@@ -58,6 +58,7 @@ public class TaxiFinder {
         
         handler = new inputHandler("lines.csv");
         lineList = handler.getLineInfo();
+        //findLineStartAndEnd(lineList, nodeList);
         
         handler = new inputHandler("traffic.csv");
         trafficList = handler.getTrafficInfo();
@@ -82,7 +83,8 @@ public class TaxiFinder {
                 Result currentResult;
                 taxiNode = Astar.findNodeClosestToTaxi(taxi, nodeList);
                 currentResult = Astar.AstarAlgorithm
-                                (taxiNode, customerNode, nodeList);
+                                (taxiNode, customerNode, nodeList, heuristic,
+                                        client.getTime());
                 Astar.clearPaths(nodeList);
 
                 if (!(currentResult == null)) {
@@ -163,8 +165,7 @@ public static void findSameStreetNodes (ArrayList<Node> list,
             else {
                Node tempNode2;
                tempNode2 = tempList.get(tempList.size()-1);
-               if (tempNode2.getX_axis() == tempNode.getX_axis() &&
-                       tempNode2.getY_axis() == tempNode.getY_axis()) {
+               if (tempNode2.getId() == tempNode.getId()) {
                    tempList.add(tempNode);
                }
                else {
@@ -183,6 +184,35 @@ public static void findSameStreetNodes (ArrayList<Node> list,
                        tempList.add(tempNode);
                 }
             }
+        }
+    }
+    
+    static void findLineStartAndEnd (ArrayList<Line> lList, 
+            ArrayList<Node> nList) {
+        for(Line line : lList) {
+            int Lid = line.getLine_id();
+            int iterator = 0;
+            for (int i=0; i < nList.size(); i++) {
+                Node temp = nList.get(i);
+                if (temp.getLine_id() == Lid) {
+                    iterator = i;
+                    break;
+                }
+            }
+            Node temp1 = nList.get(iterator);
+            line.add_lineStart(temp1.getX_axis(), temp1.getY_axis());
+            for(int i = iterator; i < nList.size(); i++) {
+                Node temp = nList.get(i);
+                if (temp.getLine_id() == Lid)
+                temp.addLine(line);
+                else {
+                    iterator = i-1;
+                    break;
+                }
+            }
+            temp1 = nList.get(iterator);
+            line.add_lineEnd(temp1.getX_axis(),temp1.getY_axis());
+            
         }
     }
     
@@ -232,6 +262,12 @@ public static void findSameStreetNodes (ArrayList<Node> list,
             
             heuristic.AddAssertion("oneway(" + id + "," + oneway + "," + 
                     oneway_direction + ")");
+            heuristic.AddAssertion(("highway("+ id +"," + 
+                    line.isHighway() +")"));
+        }
+        for (Node n : nodeList) {
+            heuristic.AddAssertion("belongsIn(" + n.getId() + "," 
+                    + n.getLine_id() + ")");
         }
     }
 }
