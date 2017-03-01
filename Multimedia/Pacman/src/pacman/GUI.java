@@ -96,6 +96,7 @@ public class GUI extends JFrame {
         
         this.add(gamePanel = new GameGraphics(this), BorderLayout.CENTER);
         gamePanel.setLayout(new GridLayout(22, 19));
+        gamePanel.setPreferredSize(new Dimension(528,456));
         
         this.add(bottomPanel = new JPanel(), BorderLayout.PAGE_END);
         bottomPanel.setLayout(new BorderLayout());

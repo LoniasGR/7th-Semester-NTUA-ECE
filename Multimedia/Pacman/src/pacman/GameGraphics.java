@@ -63,6 +63,8 @@ public class GameGraphics extends GamePanel {
     /**
      * Current state of the game
      */
+    
+    private JLabel [] items;
     public static GameState gameState;
     
     /**
@@ -76,7 +78,7 @@ public class GameGraphics extends GamePanel {
     // The actual game
     private Game game;
     
-    private GUI gui;
+    private final GUI gui;
     
     //the game's board
     private char[][] board = null;
@@ -95,7 +97,7 @@ public class GameGraphics extends GamePanel {
     public GameGraphics (GUI gui)
     {
         super();
-        
+        items = new JLabel[418];
         this.gui = gui;
         
         gameState = GameState.STARTING;
@@ -201,13 +203,17 @@ public class GameGraphics extends GamePanel {
         }
     
     }
-    
-    private void createTerrain () 
-    {
+
+    public void drawTerrain() {
         for (int i = 0; i < 22; i++) {
             for (int j = 0; j < 19; j++) {
                 System.out.print(Character.toString(board[i][j]));
-                this.add(new JLabel(Character.toString(board[i][j])));
+                switch(board[i][j]) {
+                    
+                case('#'):
+                    repaint(i,j,24,2);
+                
+                }
             }
             System.out.println();
         }
@@ -244,9 +250,10 @@ public class GameGraphics extends GamePanel {
                     Initialize();
                     // Load files - images, sounds, ...
                     LoadContent();
-                    
+                                       
+
                     //Creating the Terrain...
-                    createTerrain();
+                    drawTerrain();
                     
                     this.gui.setVisible();
 
@@ -273,7 +280,8 @@ public class GameGraphics extends GamePanel {
     }
     
     /**
-     * Draw the game to the screen. It is called through repaint() method in GameLoop() method.
+     * Draw the game to the screen. It is called through repaint()
+     * method in GameLoop() method.
      * @param g2d
      */
     @Override
@@ -289,7 +297,6 @@ public class GameGraphics extends GamePanel {
             case MAIN_MENU:
                 //...
             break;
-
         }
     }
     
