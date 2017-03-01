@@ -1,26 +1,26 @@
-;---------MACROS----------------------------;
+;---------MACROS---------------------------------------;
 
 INCLUDE MACROS.ASM
 
-;--------------DECLARATIONS----------------------------; 
+;--------------DECLARATIONS----------------------------;
 STACK_SEG SEGMENT STACK
     DW 128 DUP(?)
 ENDS
 
 DATA_SEG SEGMENT
     REQUEST DW "Give a 3-bit hex number: $"
-    DECIMAL DB "DECIMAL: $"  
+    DECIMAL DB "DECIMAL: $"
     NEW_LINE DB 0AH,0DH,"$"
     RES  DB 10 DUP ('$')
 ENDS
 
 CODE_SEG SEGMENT
-    ASSUME CS:CODE_SEG,SS:STACK_SEG,DS:DATA_SEG,ES:DATA_SEG 
+    ASSUME CS:CODE_SEG,SS:STACK_SEG,DS:DATA_SEG,ES:DATA_SEG
     ASSUME DS:DATA,CS:CODE
 
 ;--------------------CODE-------------------------------;
 
-    
+
 MAIN PROC FAR
     ;SET SEGMENT REGISTERS
     MOV AX,DATA_SEG
@@ -28,21 +28,21 @@ MAIN PROC FAR
     MOV ES,AX
 
 START:
-   PRINT_STRING REQUEST 
-   CALL GET_HEX ; DX <- 3digit hex number    
+   PRINT_STRING REQUEST
+   CALL GET_HEX ; DX <- 3digit hex number
    PUSH DX
    PRINT_STRING NEW_LINE
-   PRINT_STRING DECIMAL  
+   PRINT_STRING DECIMAL
    MOV AX,DX
-   LEA SI,RES 
+   LEA SI,RES
    POP DX
-   CALL HEX2DEC              
+   CALL HEX2DEC
    PRINT_STRING NEW_LINE
    JMP START
 EXIT:
     EXIT_PROGRAM
 MAIN ENDP
-             
+
 
 GET_HEX PROC NEAR
     MOV CX,0003H
@@ -52,22 +52,22 @@ IGNORE1:
     CMP AL,55H ; uppercase U
     JE TERMINATION
     CMP AL,30H ; '0'
-    JL IGNORE1 
+    JL IGNORE1
     CMP AL,39H ; '9'
     JG CHAR_CHECK
 IGNORE2:
     PRINT_CHAR AL
     ROL DX,04H
-    MOV AH,00H  
+    MOV AH,00H
     SUB AX,30H ; code - 48
-    ADD DX,AX   
+    ADD DX,AX
     SUB CL,01H
-    CMP CX,0000H 
+    CMP CX,0000H
 IGNORE3:
-    JE WAIT_FOR_ENTER 
+    JE WAIT_FOR_ENTER
     JMP IGNORE1
 RETURN:
-    RET             
+    RET
 
 TERMINATION:
     JMP EXIT
@@ -80,24 +80,24 @@ CHAR_CHECK:
     CMP AL,61H ; 'a'
     JL IGNORE1
     CMP AL,67H ; 'f+1'
-    JL LOWER_CASE   
+    JL LOWER_CASE
     JMP IGNORE1
-            
-                                                                                                 
-UPPER_CASE:               
+
+
+UPPER_CASE:
     PRINT_CHAR AL
     ROL DX,04H
-    MOV AH,00H  
+    MOV AH,00H
     SUB AX,37H ; code - 56
     ADD DX,AX
     SUB CL,01H
     JMP IGNORE3
 
-LOWER_CASE:    
+LOWER_CASE:
     SUB AX,20H  ; makes it uppercase for printing
     PRINT_CHAR AL
     ROL DX,04H
-    MOV AH,00H  
+    MOV AH,00H
     SUB AX,37H ; code - 56
     ADD DX,AX
     SUB CL,01H
@@ -105,22 +105,22 @@ LOWER_CASE:
 
 WAIT_FOR_ENTER:
     PUSH AX
-WFE:    
-    READ_KEY     
+WFE:
+    READ_KEY
     CMP AL,55H ; uppercase U
     JE TERMINATION
     CMP AL,0DH
-    JNZ WFE   
+    JNZ WFE
     POP AX
     JMP RETURN
-    
-                
+
+
 
 HEX2DEC PROC NEAR
     MOV CX,0
     MOV BX,10
-   
-LOOP1: 
+
+LOOP1:
     MOV DX,0
     DIV BX
     ADD DL,30H
@@ -128,20 +128,20 @@ LOOP1:
     INC CX
     CMP AX,9
     JG LOOP1
-  
+
     ADD AL,30H
-;    PUSH AX      
+;    PUSH AX
     PRINT_CHAR AL
 ;    POP AX
     MOV [SI],AL
-     
+
 LOOP2:
     POP AX
-    INC SI       
+    INC SI
     CMP CL,03H
     JNE CNT
     PUSH AX
-    MOV AL,2CH ; '
+    MOV AL,2CH ; ,
     PRINT_CHAR AL
     POP AX
     CNT:
@@ -149,4 +149,4 @@ LOOP2:
     MOV [SI],AL
     LOOP LOOP2
     RET
-HEX2DEC ENDP           
+HEX2DEC ENDP

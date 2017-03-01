@@ -31,14 +31,14 @@ JMP LOOP_1
 
 HIGH_OR_LOW:
 MOV H,A
-MOV A,L 
+MOV A,L
 CPI 00H
 JZ HIGH
 JMP LOW
 
 HIGH:
-MVI B,02H 
-MVI C,89H 
+MVI B,02H
+MVI C,89H
 CALL DISP
 MVI B,01H
 MVI C,F9H
@@ -55,7 +55,7 @@ CALL DISP
 JMP MAIN
 
 FIND_NEG_NUMBER:
-;if number = neg print the (-) and go to find number 
+;if number = neg print the (-) and go to find number
 MOV D,A
 MVI B,04H
 MVI C,BFH
@@ -67,7 +67,7 @@ JMP FIND_NUMBER
 FIND_NUMBER:
 ;while number >= 10: number = number - 10
 ;E is the tenths
-;D is the rest of the number 
+;D is the rest of the number
 MOV D,A
 MVI E,00H
 CPI 0AH
@@ -81,11 +81,11 @@ JC PRINT_NUMBER
 JMP FIND_TENTHS
 
 PRINT_NUMBER:
-;the array in memory positon 0900H holds the 7-seg value for 
+;the array in memory positon 0900H holds the 7-seg value for
 ;numbers 0 - 9
 ;so we just load  H <- 09H and to L <- A , while 0<A<9 and find the
-;corresponding value. This is done twice. Once for thenths and once 
-;for the rest. 
+;corresponding value. This is done twice. Once for tenths and once 
+;for the rest.
 MOV D,A
 MOV A,E
 MVI H,09H
@@ -104,8 +104,8 @@ CALL DISP
 JMP MAIN
 
 
-DISP: 
-;DISP takes the position on whci 7-seg to put the number in reg B 
+DISP:
+;DISP takes the position on whci 7-seg to put the number in reg B
 ;and the leds to light up on reg C (reverse logic)
 MVI A,FFH
 STA 3800H
@@ -115,7 +115,7 @@ MOV A,C
 STA 3800H
 RET
 
-ORG 0900H 
+ORG 0900H
 DB C0H ;0
 DB F9H ;1
 DB A4H ;2

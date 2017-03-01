@@ -57,7 +57,7 @@ public class Heuristics {
         return jipQuery.nextSolution() != null;   
     }
     
-    public int returnHeuristic (Node current, Node neighbour, 
+    public double returnHeuristic (Node current, Node neighbour, 
             Node goal, int time) {
         int Id1 = current.getId();
         int Id2 = neighbour.getId();
@@ -68,12 +68,38 @@ public class Heuristics {
         double Ydst = goal.getY_axis();
         
         String s = "returnHeuristic(" + Id1 + "," + Id2 + "," + X1 + "," + X2 + 
-                "," + Y2 + "," + Xdst + "," + Ydst + ",A).";
+                "," + Y2 + "," + Xdst + "," + Ydst + ",H,Id).";
         
         jipQuery = jip.openSynchronousQuery(Tparser.parseTerm(s));
         JIPTerm str = jipQuery.nextSolution();
-        System.out.println(str);
         
-        return 1;
+        if (str == null) {
+            return Double.MAX_VALUE;
+        }        
+        
+        else {
+            String result = str.toString();
+            String [] result_split = result.split(",");
+            double heur = Double.parseDouble(result_split[7]);
+            int id = Integer.parseInt(result_split[8].substring
+        (0,result_split[8].length() - 1));
+            
+            String s2 = "returnTraffic(" + id + "," +  time +",M, R).";
+            
+            jipQuery = jip.openSynchronousQuery(Tparser.parseTerm(s2));
+            JIPTerm str2 = jipQuery.nextSolution();
+            
+            if (str2 == null) {
+                return heur;
+            }
+            
+            else {
+                String resultFinal = str2.toString();
+                String [] resultF_split = resultFinal.split(",");
+                double multiplier = Double.parseDouble(resultF_split[2]);
+
+                return heur * multiplier;
+            }
+        }
     }
 }

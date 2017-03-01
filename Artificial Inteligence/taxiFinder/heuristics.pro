@@ -1,3 +1,4 @@
+/* Correct capacity of the taxi */
 correctCap(X, Y, Z) :-
     X>= Y,
     X=< Z.
@@ -24,19 +25,29 @@ client(Cxax,Cyax,Cdxax,Cdyax,Time,P,Lang,Lug)) :-
     correctCap(P, MinCap, MaxCap).
     checkLD(Xax,Yax,Cxax,Cyax,Cyax,Cdxax,Cdyax,LD).
 
+
+/*
+ * Multiplier is the times we multiply our heuristic of one street depending on
+ * the traffic there is on the street. Higher traffic , higher multiplier.
+ */
 multiplier(D, low) :-
-    D is 1.
+    D = 1.
 
 multiplier(D, medium) :-
-    D is 1.5.
+    D = 1.5.
 
 multiplier(D,high) :-
-    D is 2.
+    D = 2.
 
+/* Find the common Line between the nodes */
 commonLine(Id1, Id2, Id) :-
     belongsIn(Id1, Id),
     belongsIn(Id2, Id).
 
+/* Find the direction the street is going. A bit-error prone, as it only depends
+ * on the X axis value. We know that when the nodes are inserted, they are
+ * sorted by their X value, so we use it to determine the direction.
+ */
 findDirection(Id,X1,X2, 1) :-
     oneway(Id, false, false).
 
@@ -48,8 +59,18 @@ findDirection(Id, X1, X2, 1) :-
     X1 >= X2,
     oneway(Id, true, true).
 
-returnHeuristic(Id1,Id2, XN1,XN2,Y2, Xdst, Ydst, A, D) :-
+/* Checks for the intensity of traffic depending on time */
+findTraffic(T, Id, R) :-
+        traffic(Id,S,E,R),
+        T>= S,
+        T=< E.
+
+returnHeuristic(Id1,Id2, XN1,XN2,Y2, Xdst, Ydst, H, Id) :-
     commonLine(Id1, Id2, Id),
-    findDirection(Id, XN1, XN2, D),
     highway(Id, true),
-    distance(XN2, Y2, Xdst, Ydst,A).
+    findDirection(Id, XN1, XN2, D),
+    distance(XN2, Y2, Xdst, Ydst,H).
+
+returnTraffic(Id, T, M, R) :-
+    findTraffic(T, Id, R),
+    multiplier(M, R).

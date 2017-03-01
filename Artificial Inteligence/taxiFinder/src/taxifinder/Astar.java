@@ -59,6 +59,31 @@ public class Astar {
         }
         return result;
     }
+    
+     /**
+     * Used to find the node of the map that is closest to the Client's 
+     * destination, because it may not always be on a node.
+     * @param client our client
+     * @param list list of nodes.
+     * @return Node closest to client.
+     */
+    public static Node findNodeClosestToClientDestination (Customer client, 
+            ArrayList<Node> list) {
+        double distance = Double.MAX_VALUE;
+        Node result = null;
+        for (Node node: list) {
+            double currentDistance;
+            currentDistance = EukledianDistance(node.getX_axis(),
+                    node.getY_axis(), client.getDest_X_axis(), 
+                    client.getDest_Y_axis());
+           if ( currentDistance < distance) {
+               result = node;
+               distance = currentDistance;              
+           }
+        }
+        return result;
+    }
+    
     /**
      * Used to find the node of the map that is closest to the taxi,
      * because the taxi may not always be on a node.
@@ -139,14 +164,18 @@ public class Astar {
                     continue;
                 neighbour.SetCamefrom(current);
                 neighbour.SetGscore(tentativeGScore);
-                neighbour.SetFscore(neighbour.getGscore() + 
-                        heuristic.returnHeuristic(current, neighbour, 
-                                goal, time));
+                double h = heuristic.returnHeuristic(current, neighbour, 
+                                goal, time);
+                if (h != Double.MAX_VALUE) 
+                    neighbour.SetFscore(neighbour.getGscore() + h);
+                else {
+                    neighbour.SetFscore(h);
                 }
-            
             }
-        return  null;   
+            
         }
+    return  null;   
+    }
     /** 
      * Bundled with A* from Wikipedia page.
      * Used to reconstruct the path of nodes from start to goal.

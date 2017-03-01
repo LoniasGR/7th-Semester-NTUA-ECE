@@ -11,7 +11,7 @@ MVI B,03H   ;
 LXI H,0A21H ;
 MOV A,M     ;
 STA 0A00H   ;set the display to . . _ _ _ _
-STA 0A01H   ; 
+STA 0A01H   ;
 STA 0A02H   ;
 STA 0A03H   ;
 LXI H,0A20H ;
@@ -27,7 +27,7 @@ MVI C,00H ; C holds the information about what display should do
 CALL CUSTOM_KIND
 CPI 0FH
 JC PUT_NUMBER ;
-JZ PUT_NUMBER ; if button < F then its a number
+JZ PUT_NUMBER ; if button =< F then its a number
 
 START_3.5:
 CPI 85H      ; reset the display
@@ -85,7 +85,7 @@ MOV A,M
 LXI H,0A06H
 MOV M,A
 LXI H,0A01H
- 
+
 ROTATE_RIGHT_LOOP_FOR_STATIC:
 MOV A,M
 DCR L
@@ -139,19 +139,19 @@ CUSTOM_KIND:
 PUSH D
 PUSH H
 
-CUSTOM_KIND1: 
+CUSTOM_KIND1:
 CALL DISPLAY_ALL ;UPDATE DISPLAY AND WAIT
-CALL KPU ;CHK FOR PUSHED KEY	
+CALL KPU ;CHK FOR PUSHED KEY
 JNZ CUSTOM_KIND1 ;IF KEY STILL PUSHED
 
-CUSTOM_KIND2: 
+CUSTOM_KIND2:
 CALL DISPLAY_ALL ;UPDATE DISP AND WAIT
 CALL KPU ;SHK FOR PUSHED KEY
 JZ CUSTOM_KIND2 ;IF KEY NOT PUSHED
 LXI H,0BE8H ;ADRS OF FIRST KEY ROW SCAN
 MVI D,FFH ;LOAD ROW COUNTER TO 0-1
 
-CUSTOM_KIND3: 
+CUSTOM_KIND3:
 MOV A,M ;GET ROW N KEY DATA
 CPI F7H ;IS IT THE HDWR STEP KEY?
 JZ CUSTOM_KIND5 ;YES JUMPS
@@ -164,7 +164,7 @@ CPI 04H ;SEE IF D3=1
 JNZ CUSTOM_KIND4 ;IF SO
 DCR A ;ELSE SET A=3
 
-CUSTOM_KIND4: 
+CUSTOM_KIND4:
 ADD D ;ADD 3X THE ROW N TO
 ADD D ;GET THE TABLE OFFSET
 ADD D
@@ -174,17 +174,17 @@ LXI H,01AFH ;ADRS OF KEY CODE TABLE
 DAD D ;ADD INDEX TO TABLE ADRS
 MOV A,M ;PUT KEY CODE IN A
 
-CUSTOM_KIND5: 
+CUSTOM_KIND5:
 POP H
 POP D
-RET 
+RET
 
-DISPLAY_ALL: 
+DISPLAY_ALL:
 ; custom multi-function routine to handle the 7-seg display
 ; takes as arguments the reg C, as well as the 6 position
 ; array originating from mem 0A00h.
 ; DISPLAY_ALL uses the same idea as DCD, taking the codes from a
-; specific memory position and copying the to the display.
+; specific memory position and copying them to the display.
 PUSH PSW
 PUSH H
 PUSH B
@@ -223,7 +223,7 @@ MOV A,M
 LXI H,0A06H
 MOV M,A
 LXI H,0A01H
- 
+
 ROTATE_RIGHT_LOOP:
 MOV A,M
 DCR L
@@ -261,8 +261,8 @@ POP H
 POP PSW
 RET
 
-DISP: 
-;DISP takes the position on whci 7-seg to put the number in reg B 
+DISP:
+;DISP takes the position on whci 7-seg to put the number in reg B
 ;and the leds to light up on reg C (reverse logic)
 MVI A,FFH
 STA 3800H
@@ -282,7 +282,7 @@ DB FFH
 DB FFH ; 0A05H -> MSB
 DB FFH
 
-ORG 0A10H 
+ORG 0A10H
 ;lookup table for the 7-seg code of each number and letter.
 DB C0H ; 0A10H -> 0
 DB F9H ; 0A11H -> 1

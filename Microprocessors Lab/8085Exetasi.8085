@@ -1,0 +1,63 @@
+IN 10H
+;disable memory protection
+
+;CALL DELB
+; CB registers acct as the time to wait BC * 1 msec
+
+CALL KIND
+;load on A the code of the button pressed
+
+CALL DCD
+CALL STDM
+;to print to the screen
+
+;easy store to memory
+LXI H,xxxxH
+MOV M,A
+
+
+;LDA 2000H
+;Input
+
+;STA 3000H
+;output
+
+;All calculations are made in A(accumulator)
+;possible registers A,B,C,D,E,H,L
+
+;interrupt set & enable
+
+MVI A,0DH
+SET
+EI
+
+;interrupt disable
+DI
+
+;interrupt handler
+INTR_ROUTINE:
+DI
+PUSH PSW
+;push to the stack whatever you want to save
+
+;safety measure for multiple interrupts
+RIM		;
+ANI 20H	;
+CPI 20H	;
+JZ ROUTINE_1	;
+MVI C,32H	;Flowchart no.1 from 8085 from laboratory notes
+MVI B,00H	;page 60
+CALL DELB	;
+RIM		;
+ANI 20H	;
+CPI 20H	;
+JZ ROUTINE_1	;
+
+;YOUR CODE GOES HERE
+
+;end of safety measure
+
+
+;end of program
+HLT
+END

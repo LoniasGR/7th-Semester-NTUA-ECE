@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class TaxiFinder {
+    
+    
 /**
  * Main class of the program. There are two functions that create the edges
  * of the graph for faster traversal. Main just binds all classes together.
@@ -27,10 +29,13 @@ public class TaxiFinder {
     
     private static Node customerNode;
     private static Node taxiNode;
+    private static Node customerDestNode;
+    
     private static ArrayList<Result> results;
     private static Result bestResult;
-    private static Taxi mostSuitableTaxi;
     private static Heuristics heuristic;
+    
+    
     /**
      * Main starts by calling the inputHandler class methods, then creates
      * the graph using TaxiFinder class methods and finally using Astar class 
@@ -42,9 +47,7 @@ public class TaxiFinder {
             Exception {
         
         bestResult = new Result(null, Double.MAX_VALUE);
-        
-        mostSuitableTaxi = null;
-        
+                
         inputHandler handler;
         
         handler = new inputHandler("taxis.csv");
@@ -58,7 +61,11 @@ public class TaxiFinder {
         
         handler = new inputHandler("lines.csv");
         lineList = handler.getLineInfo();
-        //findLineStartAndEnd(lineList, nodeList);
+        
+        /* 
+        NOT USED. 
+        findLineStartAndEnd(lineList, nodeList);
+        */
         
         handler = new inputHandler("traffic.csv");
         trafficList = handler.getTrafficInfo();
@@ -76,8 +83,12 @@ public class TaxiFinder {
         findIdenticalNodes(nodeList2); 
         
         results = new ArrayList<>();
+        
         customerNode = 
                 Astar.findNodeClosestToClient(client, nodeList);
+        customerDestNode =
+                Astar.findNodeClosestToClientDestination(client, nodeList);
+        
         for (Taxi taxi: taxis) {
             if (heuristic.checkCompatibility(taxi, client)) {
                 Result currentResult;
@@ -93,7 +104,6 @@ public class TaxiFinder {
                     if (bestResult.getDistance() > currentResult.getDistance())
                     {
                         bestResult = currentResult;
-                        mostSuitableTaxi = taxi;
                     }
                 }
             } else continue;
@@ -102,16 +112,25 @@ public class TaxiFinder {
             System.out.println("No path to client found!");
         }
         else {
+             List<Result> bestResults;
+             Result destResult = Astar.AstarAlgorithm(customerNode, 
+                    customerDestNode, nodeList, heuristic, client.getTime());
             Collections.sort(results, new ResultByDistanceComparator());
-            List<Result> bestResults = results.subList(0, 5);
+            if (results.size() > 5)
+                bestResults = results.subList(0, 5);
+            else
+                bestResults = results.subList(0, results.size() - 1);
             outputHandler.printbestResultsByDistance(bestResults);
             bestResults.remove(bestResult);
-            outputHandler.writeToFile(bestResult, bestResults, "map1.kml");
+            outputHandler.writeToFile(bestResult, destResult,
+                    bestResults, "map1.kml");
             bestResults.add(bestResult);
             Collections.sort(bestResults, new ResultByTaxiRatingComparator());
             outputHandler.printbestResultsByRating(bestResults);
+            bestResult = bestResults.get(0);
             bestResults.remove(bestResult);
-            outputHandler.writeToFile(bestResult, bestResults, "map2.kml");
+            outputHandler.writeToFile(bestResult, destResult, 
+                    bestResults, "map2.kml");
             bestResults.add(bestResult);
             
         }
@@ -186,7 +205,15 @@ public static void findSameStreetNodes (ArrayList<Node> list,
             }
         }
     }
-    
+    /**
+     * Consumes a lot of time and has low usefulness, so it's not used.
+     * It's purpose is to connect all the nodes with a line, as well as find
+     * the starting and ending node of each line. The idea was to be used for 
+     * tracking the direction of a line. A simpler, but more error prone way 
+     * inside the prolog subsystem was used instead.
+     * @param lList line list
+     * @param nList node list
+     */
     static void findLineStartAndEnd (ArrayList<Line> lList, 
             ArrayList<Node> nList) {
         for(Line line : lList) {
@@ -216,6 +243,11 @@ public static void findSameStreetNodes (ArrayList<Node> list,
         }
     }
     
+    /**
+     * Connects the traffic of each line with the corresponding line.
+     * @param lineList line list
+     * @param trafficList traffic list
+     */
     static void connectTrafficWithLine (ArrayList<Line> lineList, 
             ArrayList<Traffic> trafficList) {
         
@@ -229,6 +261,11 @@ public static void findSameStreetNodes (ArrayList<Node> list,
         }    
     }
     
+    /** 
+     * The main way to add information to prolog, through assertions.
+     * The information that is added is about Taxi driver language,
+     * traffic, oneway streets and the lines each node belongs in.
+     */
     static void addInformationToProlog () {
         for(Taxi taxi1 : taxis) {
             String [] languages = taxi1.getLanguages();
@@ -248,9 +285,11 @@ public static void findSameStreetNodes (ArrayList<Node> list,
                     int srtH = hour.getStartingTime();
                     int endH = hour.getEndingTime();
                     String vol = hour.getAmount();
-
-                    heuristic.AddAssertion("traffic(" + id + "," + srtH + ","
-                          + endH + "," + vol + ")");
+                    String s = "traffic(" + id + "," + srtH + ","
+                          + endH + "," + vol + ")";
+                    
+                    heuristic.AddAssertion(s);
+                    
                 }
             }
         }
