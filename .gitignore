@@ -61,3 +61,6 @@ Mkfile.old
 dkms.conf
 /Multimedia/Pacman/nbproject/private/
 /Prolog Example/nbproject/private/
+*.class
+*.properties
+Artificial Inteligence/taxiFinder/nbproject/private/private.xml
