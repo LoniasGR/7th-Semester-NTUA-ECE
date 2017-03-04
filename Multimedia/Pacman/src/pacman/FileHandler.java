@@ -7,6 +7,7 @@ package pacman;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -35,6 +36,10 @@ public class FileHandler
         }
     }
     
+    public void close() {
+        inputFile.close();
+    }
+    
     public char[][] ReadInput ()
     {
         char[][] fileArray = new char[22][19];
@@ -53,5 +58,26 @@ public class FileHandler
         
     return fileArray; 
     }
+    
+    public String[][] ReadHighscores () throws FileNotFoundException, IOException 
+    {
+        String[][] scores;
+            scores = new String[5][2];
+            String line;
+            int counter = 0;
+            while(inputFile.hasNext())
+            {
+                line = inputFile.next();
+                String [] parts = line.split("-");
+                scores[counter][0] = parts[0];
+                scores[counter][1] = parts[1];
+                counter++;
+            }
+        
+        
+        return scores;
+    }
+    
+    
    
 }

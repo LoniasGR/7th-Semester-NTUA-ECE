@@ -5,7 +5,6 @@
  */
 package pacman;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
@@ -39,6 +38,53 @@ public abstract class GamePanel extends JPanel
         to receive key events from this component. */
         this.addKeyListener(this);
         
+    }
+    
+    
+    public int findNumberOfCookies (char [][] board) {
+        int cookies =0;
+        for(int x = 0; x < 19; x++) {
+            for (int y=0; y<22; y++) {
+                if (board[y][x] == '.' || board[y][x] == 'O') {
+                    cookies++;
+                }
+            }
+        }
+        return cookies;
+    }    
+    public Coordinates findGhostsLocation (char [][]board) {
+        for(int x = 0; x < 19; x++) {
+            for (int y=0; y<22; y++) {
+                if (board[y][x] == 'F') {
+                    return new Coordinates(24*x,24*y);
+                }
+            }
+        }
+        return null;
+    }
+    
+    public Coordinates findEntrance (char[][] board) {
+        for(int x = 0; x < 19; x++) {
+            for (int y=0; y<22; y++) {
+                if (board[y][x] == '-') {
+                    return new Coordinates(24*x,24*y);
+                }
+            }
+        }
+        return null;
+    }
+    
+    public Coordinates findPacmanLocation(char [][]  board) {
+        for(int x = 0; x < 19; x++) {
+            for (int y=0; y<22; y++) {
+                if (board[y][x] == 'P') {
+                    System.out.println("Pacman Starting Position: " + 
+                            x + ", " + y);
+                    return new Coordinates(24*x,24*y);
+                }
+            }
+        }
+        return null;
     }
     
      /* This method is overridden in GameGraphics.

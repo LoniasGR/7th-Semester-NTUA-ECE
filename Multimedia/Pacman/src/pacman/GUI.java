@@ -3,16 +3,23 @@ package pacman;
 
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.image.BufferedImage;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class GUI extends JFrame {
@@ -26,22 +33,30 @@ public class GUI extends JFrame {
     
     private static GameGraphics gamePanel;
     
-    private static JLabel score;
-    private static JLabel highScore;
-    private static JLabel lives;
+    public static JLabel score;
+    public static JLabel highScore;
+    public static JLabel lives1;
+    public static JLabel lives2;
+    public static JLabel lives3;
     
-    private static JButton start;
+    public JButton start;
     private static JButton pause;
     
     private static GridBagConstraints scoreLabelConstr;
     private static GridBagConstraints scoreConstr;
     private static GridBagConstraints highScoreLabelConstr;
     private static GridBagConstraints highScoreConstr;
-    private static GridBagConstraints livesLabelConstr;
-    private static GridBagConstraints livesConstr;
     private static GridBagConstraints pauseConstr;
     private static GridBagConstraints startConstr;
-        
+            
+    public JOptionPane lossmessage;
+    
+    private JMenuBar menubar;
+    private JMenu gamemenu;
+    public JMenuItem mstart;
+    public JMenuItem load;
+    public JMenuItem highscores;
+    public JMenuItem exit;
     
     public GUI (String s) throws IOException {
         super(s);
@@ -60,13 +75,6 @@ public class GUI extends JFrame {
         highScoreConstr.gridy = 1;
         highScoreConstr.insets = new Insets(0, 0, 0, 50);
         
-        livesLabelConstr = new GridBagConstraints();
-        livesLabelConstr.insets = new Insets(0, 10, 0, 0);
-        
-        livesConstr = new GridBagConstraints();
-        livesConstr.gridx = 1;
-        livesConstr.insets = new Insets (0, 10, 0, 0);
-        
         pauseConstr = new GridBagConstraints();
         pauseConstr.insets = new Insets (0, 0, 0, 25);
         
@@ -76,6 +84,8 @@ public class GUI extends JFrame {
         
         organiseGUI();
         createGUI();
+        createMenuBar();
+        
         
         
     }
@@ -96,16 +106,18 @@ public class GUI extends JFrame {
         
         this.add(gamePanel = new GameGraphics(this), BorderLayout.CENTER);
         gamePanel.setLayout(new GridLayout(22, 19));
-        gamePanel.setPreferredSize(new Dimension(528,456));
+        gamePanel.setPreferredSize(new Dimension(456,528));
+        gamePanel.setBackground(Color.BLACK);
         
         this.add(bottomPanel = new JPanel(), BorderLayout.PAGE_END);
         bottomPanel.setLayout(new BorderLayout());
         bottomPanel.add(livesPanel = new JPanel(), BorderLayout.LINE_START);
         
-        livesPanel.setLayout(new GridBagLayout());
-        livesPanel.add(new JLabel("Lives"), livesLabelConstr);        
-        livesPanel.add(lives = new JLabel(), livesConstr);
-       
+        livesPanel.add(new JLabel("Lives :"));        
+        livesPanel.add(lives1 = new JLabel());
+        livesPanel.add(lives2 = new JLabel());
+        livesPanel.add(lives3 = new JLabel());
+        
         bottomPanel.add(gameControlsPanel = new JPanel(),
                 BorderLayout.LINE_END);
         
@@ -113,28 +125,105 @@ public class GUI extends JFrame {
         start = new JButton("Start");
         start.setPreferredSize(new Dimension(70, 25));
         gameControlsPanel.add(start, startConstr);
-        pause = new JButton("Pause");
-        pause.setPreferredSize(new Dimension(70, 25));
-        gameControlsPanel.add(pause, pauseConstr);
+        //pause = new JButton("Pause");
+        //pause.setPreferredSize(new Dimension(70, 25));
+        //gameControlsPanel.add(pause, pauseConstr);
         
     }
     
     private void createGUI() {
-        setSize(800,600);
+        setSize(600,800);
         setLocationRelativeTo(null);       
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(400,400));
+        setMinimumSize(new Dimension(400,600));
 
         
     }
+    
+    private void createMenuBar() {
+        menubar = new JMenuBar();
+        setJMenuBar(menubar);
+        
+        gamemenu = new JMenu("Game");
+        menubar.add(gamemenu);
+        
+        mstart = new JMenuItem("Start");
+        load = new JMenuItem("Load");
+        highscores = new JMenuItem("Highscores");
+        exit = new JMenuItem("Exit");
+        
+        gamemenu.add(mstart);
+        gamemenu.add(load);
+        gamemenu.add(highscores);
+        gamemenu.add(exit);
+        
+       
+    } 
     
     public void setVisible() {
         this.pack();
         this.setVisible(true);
     }
-    
-    private void initializeButtons () {
-        //TODO
+
+    public int showVictoryMessage () {
+        Object[] options = {"Restart Game", "Exit Game"};
+        
+        int n = JOptionPane.showOptionDialog(this,
+        "You Won.\n Dou you want to play again or exit?",
+        "Victory",
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,     //do not use a custom Icon
+        options,  //the titles of buttons
+        options[0]); //default button title
+        
+        return n;
     }
+    
+    public String showHighscoreMessage (int position) {
+        position++;
+        String congrats = "Congratulations you made it to the leaderboard"
+                + " \n in position " + position + "!\n Type your name for it "
+                + "to be recorded!";
+            String name = JOptionPane.showInputDialog(
+        this, 
+        congrats , 
+        "HIGHSCORE ACHIEVED", 
+        JOptionPane.WARNING_MESSAGE
+    );
+            return name;
+    }
+    
+    public int showLossMessage () {
+        Object[] options = {"Restart Game", "Exit Game"};
+        
+        int n = JOptionPane.showOptionDialog(this,
+        "You Lost.\n Dou you want to play again or exit?",
+        "LOSS",
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,     //do not use a custom Icon
+        options,  //the titles of buttons
+        options[0]); //default button title
+        
+        return n;
+    }
+    
+    public void closeMessage() {
+        Window[] windows = Window.getWindows();
+                for (Window window : windows) {
+                    if (window instanceof JDialog) {
+                        JDialog dialog = (JDialog) window;
+                        if (dialog.getContentPane().getComponentCount() == 1
+                            && dialog.getContentPane().getComponent(0) instanceof JOptionPane){
+                            dialog.dispose();
+                        }
+                    }
+        }
+    }
+   
+
+    
+    
     
 }

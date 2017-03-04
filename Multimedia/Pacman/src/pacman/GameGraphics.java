@@ -5,30 +5,37 @@
  */
 package pacman;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MediaTracker;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author Leonidas Avdelas
  */
 public class GameGraphics extends GamePanel {
-    
+        
+    public int BLOCK_SIZE = 24;
     /**
      * Width of the frame.
      */
-    public static int frameWidth;
+    public static int frameWidth = 456;
     /**
      * Height of the frame.
      */
-    public static int frameHeight;
+    public static int frameHeight = 528;
     
     /**
      * Time of one second in nanoseconds.
@@ -46,7 +53,7 @@ public class GameGraphics extends GamePanel {
      * FPS - Frames per second
      * How many times per second the game should update?
      */
-    private final int GAME_FPS = 60;
+    private final int GAME_FPS = 30;
     
     /**
      * Pause between updates. It is in nanoseconds.
@@ -58,13 +65,12 @@ public class GameGraphics extends GamePanel {
      * Possible states of the game
      */
     public static enum GameState
-    {STARTING, MAIN_MENU, PLAYING, GAMEOVER, WIN, PAUSE}
+    {STARTING, MAIN_MENU, PLAYING, GAMEOVER, WIN, PAUSE, DEATH, RESTART}
     
     /**
      * Current state of the game
      */
     
-    private JLabel [] items;
     public static GameState gameState;
     
     /**
@@ -75,17 +81,27 @@ public class GameGraphics extends GamePanel {
     // It is used for calculating elapsed time.
     private long lastTime;
     
+    public int pacDir_x;
+    public int pacDir_y;
+    
+    
     // The actual game
     private Game game;
     
     private final GUI gui;
     
     //the game's board
-    private char[][] board = null;
+    public char[][] board = null;
+    
+    //colors for some parts of the game
+    private final Color mazeColor = Color.BLUE;
+    private final Color foodColor = Color.orange;
+    private final Color gateColor = Color.GRAY; 
     
     private MediaTracker images;
     
     private Image pacmanIdle;
+    private ImageIcon pacmanIcon;
     private Image[] pacmanUp;
     private Image[] pacmanDown;
     private Image[] pacmanRight;
@@ -93,12 +109,20 @@ public class GameGraphics extends GamePanel {
     private Image[] ghost;
     private Image[] ghostScared;
     
+    private int pacmanAnimPos;
+    private Integer [] ghostAnimPos;
+    
+    private int ghosts;
+    public boolean scared;
+    public Coordinates pacman_Coords;
+    public ArrayList<Coordinates> ghost_Coords;
+        
     
     public GameGraphics (GUI gui)
     {
         super();
-        items = new JLabel[418];
         this.gui = gui;
+        
         
         gameState = GameState.STARTING;
         
@@ -111,6 +135,9 @@ public class GameGraphics extends GamePanel {
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(GameGraphics.class.getName())
                             .log(Level.SEVERE, null, ex);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(GameGraphics.class.getName()).
+                            log(Level.SEVERE, null, ex);
                 }
             }
         };
@@ -125,7 +152,7 @@ public class GameGraphics extends GamePanel {
      */
     private void Initialize() throws FileNotFoundException
     {
-        FileHandler fh;
+        FileHandler fh = null;
         try {
             fh = new FileHandler("boards/board1.txt");
             board = fh.ReadInput();
@@ -135,6 +162,46 @@ public class GameGraphics extends GamePanel {
             System.err.print(e.getMessage());
             System.exit(1);
         }
+        
+        fh.close();
+        
+        reset();
+        
+        addActionListenerForMenu();
+        
+        gui.start.setActionCommand("Start");
+        gui.start.addActionListener((ActionEvent e) -> {
+            if ("Start".equals(e.getActionCommand())) {
+                gui.start.setEnabled(false);
+                newGame();
+            }
+        });        
+    }
+    private void reset() {
+        pacDir_x = 0;
+        pacDir_y = 0;
+        pacmanAnimPos = 2;
+        pacman_Coords = findPacmanLocation(board);
+//        System.out.println("Pacman Location is: " + pacman_Coords.getX_pos() +
+//                ", " +pacman_Coords.getY_pos());
+        
+        ghosts = 4;
+        scared = false;
+        Coordinates coordinates = findGhostsLocation(board);
+        ghost_Coords = new ArrayList<>();
+        for (int i =0; i < ghosts; i++) {
+            ghost_Coords.add(new Coordinates(coordinates));
+        }
+        ghostAnimPos = new Integer [ghosts];
+        for(int i = 0; i < ghosts; i++) {
+            ghostAnimPos[i] = 2;
+        }
+        
+        System.out.println("There are " + ghosts + " ghosts.");
+        for (Coordinates coords : ghost_Coords) {
+        System.out.println("Location: " + coords.getX_pos() +", "
+        + coords.getY_pos());
+        }       
     }
     
     /**
@@ -146,24 +213,12 @@ public class GameGraphics extends GamePanel {
     {
         images = new MediaTracker(this);
         
-        ghost = new Image[2];
-        ghost[0] = new ImageIcon("/ghostpics/Ghost1.gif").getImage();
-        images.addImage(ghost[0],0);
-        ghost[1] = new ImageIcon("/ghostpics/Ghost2.gif").getImage();
-        images.addImage(ghost[1],0);
-        
-        ghostScared = new Image[2];
-        ghostScared[0] = new ImageIcon("/ghostpics/GhostScared1.gif").getImage();
-        images.addImage(ghostScared[0], 0);
-        ghostScared[1] = new ImageIcon("/ghostpics/GhostScared2.gif").getImage();
-        images.addImage(ghostScared[1], 0);
-        
         pacmanUp = new Image[3];
-        pacmanUp[0] = new ImageIcon("/pacpics/PMup1.gif").getImage();
+        pacmanUp[0] = new ImageIcon("pacpics/PMup1.gif").getImage();
         images.addImage(pacmanUp[0], 0);
-        pacmanUp[1] = new ImageIcon("/pacpics/PMup2.gif").getImage();
+        pacmanUp[1] = new ImageIcon("pacpics/PMup2.gif").getImage();
         images.addImage(pacmanUp[1], 0);
-        pacmanUp[2] = new ImageIcon("/pacpics/PMup3.gif").getImage();
+        pacmanUp[2] = new ImageIcon("pacpics/PMup3.gif").getImage();
         images.addImage(pacmanUp[2], 0);
         
         pacmanDown = new Image[3];
@@ -190,8 +245,21 @@ public class GameGraphics extends GamePanel {
         pacmanLeft[2] = new ImageIcon("pacpics/PMleft3.gif").getImage();
         images.addImage(pacmanLeft[2], 0);
         
-        pacmanIdle = new ImageIcon("pacpics/PM.gif").getImage();
+        pacmanIdle = new ImageIcon("pacpics/PM0.gif").getImage();
         images.addImage(pacmanIdle, 0);
+        pacmanIcon = new ImageIcon("pacpics/PMright3.gif");
+        
+        ghost = new Image[2];
+        ghost[0] = new ImageIcon("ghostpics/Ghost1.gif").getImage();
+        images.addImage(ghost[0],0);
+        ghost[1] = new ImageIcon("ghostpics/Ghost2.gif").getImage();
+        images.addImage(ghost[1],0);
+        
+        ghostScared = new Image[2];
+        ghostScared[0] = new ImageIcon("ghostpics/GhostScared1.gif").getImage();
+        images.addImage(ghostScared[0], 0);
+        ghostScared[1] = new ImageIcon("ghostpics/GhostScared2.gif").getImage();
+        images.addImage(ghostScared[1], 0);
         
         try {
            images.waitForAll();
@@ -204,29 +272,19 @@ public class GameGraphics extends GamePanel {
     
     }
 
-    public void drawTerrain() {
-        for (int i = 0; i < 22; i++) {
-            for (int j = 0; j < 19; j++) {
-                System.out.print(Character.toString(board[i][j]));
-                switch(board[i][j]) {
-                    
-                case('#'):
-                    repaint(i,j,24,2);
-                
-                }
-            }
-            System.out.println();
-        }
-    }
     
     /**
      * In specific intervals of time (GAME_UPDATE_PERIOD) the game/logic 
      * is updated and then the game is drawn on the screen.
      */
-    private void GameLoop() throws FileNotFoundException
+    private void GameLoop() throws FileNotFoundException, InterruptedException
     {
-        // This variables are used for calculating the time that defines for how long we should put threat to sleep to meet the GAME_FPS.
+        // This variables are used for calculating the time that defines 
+        //for how long we should put threat to sleep to meet the GAME_FPS.
         long beginTime, timeTaken, timeLeft;
+        
+        boolean death = false;
+        int leaderboard;
         
         while(true)
         {
@@ -235,14 +293,66 @@ public class GameGraphics extends GamePanel {
             switch (gameState)
             {
                 case PLAYING:
+                    death = false;
                     gameTime += System.nanoTime() - lastTime;
-                    
+
                     
                     lastTime = System.nanoTime();
-                break;
+                    break;
+                case WIN:
+                    leaderboard = game.checkForHighscore();
+                    String name = gui.showHighscoreMessage(leaderboard);
+            {
+                try {
+                    game.addHighscore(leaderboard, name);
+                } catch (UnsupportedEncodingException ex) {
+                    Logger.getLogger(GameGraphics.class.getName())
+                            .log(Level.SEVERE, null, ex);
+                }
+            }
+                    
+                    
+                    int replay = gui.showVictoryMessage();
+                    
+                    if (replay == JOptionPane.YES_OPTION) {
+                        System.out.println("Game Restarting");
+                        gui.closeMessage();
+                        GameGraphics.gameState = GameGraphics.GameState.RESTART;
+                    }
+                    if (replay == JOptionPane.NO_OPTION 
+                            || replay == JOptionPane.CLOSED_OPTION)
+                        System.exit(0);
+                    
+                    break;
                 case GAMEOVER:
-                    //...
+                   leaderboard = game.checkForHighscore();
+                    int restart = gui.showLossMessage();
+                    if (restart == JOptionPane.YES_OPTION) {
+                        System.out.println("Game Restarting");
+                        gui.closeMessage();
+                        GameGraphics.gameState = GameGraphics.GameState.RESTART;
+                    }
+                    if (restart == JOptionPane.NO_OPTION 
+                            || restart == JOptionPane.CLOSED_OPTION)
+                        System.exit(0);
                 break;
+                case RESTART:
+                    System.out.println("Game restarting!");
+                    Initialize();
+                    game.reset();
+                    game.lives = 3;
+                    gameState = GameState.PLAYING; 
+                    break;
+                    
+                case DEATH:
+                    game.lives--;
+                    reset();
+                    game.reset();
+                    gameState = GameState.PLAYING;
+                    death = true;
+                    Thread.sleep(5);
+                break;
+                
                 case MAIN_MENU:
                 break;
                 case STARTING:
@@ -250,35 +360,309 @@ public class GameGraphics extends GamePanel {
                     Initialize();
                     // Load files - images, sounds, ...
                     LoadContent();
-                                       
-
-                    //Creating the Terrain...
-                    drawTerrain();
-                    
                     this.gui.setVisible();
+                    pacmanIcon.getImage().flush();
+                    GUI.lives1.setIcon(pacmanIcon);
+                    GUI.lives2.setIcon(pacmanIcon);
+                    GUI.lives3.setIcon(pacmanIcon);
 
-
-                    // When all things that are called above finished, we change game status to main menu.
+                    // When all things that are called above finished, 
+                    //we change game status to main menu.
                     gameState = GameState.MAIN_MENU;
                 break;
             }
             
             // Repaint the screen.
-            repaint();
+            if (!death)
+                repaint();
             
-            // Here we calculate the time that defines for how long we should put threat to sleep to meet the GAME_FPS.
+            // Here we calculate the time that defines 
+            //for how long we should put threat to sleep to meet the GAME_FPS.
             timeTaken = System.nanoTime() - beginTime;
-            timeLeft = (GAME_UPDATE_PERIOD - timeTaken) / NANOSEC_IN_MILLISEC; // In milliseconds
-            // If the time is less than 10 milliseconds, then we will put thread to sleep for 10 millisecond so that some other thread can do some work.
+            timeLeft = (GAME_UPDATE_PERIOD - timeTaken) / NANOSEC_IN_MILLISEC; 
+            // In milliseconds
+            // If the time is less than 10 milliseconds, then we will put thread
+            //to sleep for 10 millisecond so that some other 
+            //thread can do some work.
             if (timeLeft < 10) 
                 timeLeft = 10; //set a minimum
             try {
-                 //Provides the necessary delay and also yields control so that other thread can do work.
+                 //Provides the necessary delay and also 
+                 //yields control so that other thread can do work.
                  Thread.sleep(timeLeft);
             } catch (InterruptedException ex) { }
         }
     }
     
+    private void addActionListenerForMenu () {
+         gui.exit.addActionListener((ActionEvent arg0) -> {
+            System.exit(0);
+        });
+    }
+    
+    
+    private void drawGhosts0 (Graphics2D g2d) {
+        if (scared == true) {
+            drawGhostsScared1(g2d);
+            System.out.println("Ghosts are scared now!");
+        }
+        else 
+            drawGhosts1(g2d);
+    }
+    
+    private void drawGhosts1(Graphics2D g2d) {
+        int c = 0;
+        for(Ghost ghost1 : game.AI.ghosts) {
+            switch(ghostAnimPos[c]) {
+                case 1:
+                    g2d.drawImage(ghost[0], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);
+                    break;
+                case 2:
+                    g2d.drawImage(ghost[1], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);               
+                    break;
+                default:
+                    g2d.drawImage(ghost[0], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);
+            }
+            if(ghostAnimPos[c]++ == 3)
+                ghostAnimPos[c] = 1;
+        
+            c++;
+        }
+    }
+     private void drawGhostsScared1(Graphics2D g2d) {
+        int c = 0;
+        for(Ghost ghost1 : game.AI.ghosts) {
+            switch(ghostAnimPos[c]) {
+                case 1:
+                    g2d.drawImage(ghostScared[0], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);
+                    break;
+                case 2:
+                    g2d.drawImage(ghostScared[1], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);               
+                    break;
+                default:
+                    g2d.drawImage(ghostScared[0], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);
+            }
+            if(ghostAnimPos[c]++ == 3)
+                ghostAnimPos[c] = 1;
+        
+            c++;
+        }
+    }
+     
+     private void drawGhosts(Graphics2D g2d) {
+        int c = 0;
+        for(Coordinates ghost1 : ghost_Coords) {
+            switch(ghostAnimPos[c]) {
+                case 1:
+                    g2d.drawImage(ghost[0], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);
+                    break;
+                case 2:
+                    g2d.drawImage(ghost[1], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);               
+                    break;
+                default:
+                    g2d.drawImage(ghost[0], ghost1.getX_pos(),ghost1.getY_pos(),
+                        this);
+            }
+            if(ghostAnimPos[c]++ == 3)
+                ghostAnimPos[c] = 1;
+        
+            c++;
+        }
+    }
+    
+    
+    private void drawPacman (Graphics2D g2d) {
+        if (pacDir_x == -1) 
+            drawPacmanLeft(g2d);
+        else if(pacDir_x == 1)
+            drawPacmanRight(g2d);
+        else if(pacDir_y == 1)
+            drawPacmanDown(g2d);
+        else if(pacDir_y == -1) 
+            drawPacmanUp(g2d);   
+        else 
+            g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+ 1, 
+                    pacman_Coords.getY_pos()+1,this);
+        
+        if (pacmanAnimPos++ == 5)
+            pacmanAnimPos = 1;
+    }
+    private void drawPacmanDown(Graphics2D g2d) {
+
+        switch (pacmanAnimPos) {
+            case 1:
+                g2d.drawImage(pacmanDown[0], pacman_Coords.getX_pos() + 1, 
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 2:
+                g2d.drawImage(pacmanDown[1], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 3:
+                g2d.drawImage(pacmanDown[2], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 4:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+                break;
+            default:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+        }
+    }
+    private void drawPacmanUp(Graphics2D g2d) {
+
+        switch (pacmanAnimPos) {
+            case 1:
+                g2d.drawImage(pacmanUp[0], pacman_Coords.getX_pos() + 1, 
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 2:
+                g2d.drawImage(pacmanUp[1], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 3:
+                g2d.drawImage(pacmanUp[2], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+                
+            case 4:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+            default:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+        }
+    }
+    private void drawPacmanLeft(Graphics2D g2d) {
+
+        switch (pacmanAnimPos) {
+            case 1:
+                g2d.drawImage(pacmanLeft[0], pacman_Coords.getX_pos() + 1, 
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 2:
+                g2d.drawImage(pacmanLeft[1], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 3:
+                g2d.drawImage(pacmanLeft[2], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+             case 4:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+            default:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+        }
+    }
+    
+    private void drawPacmanRight(Graphics2D g2d) {
+
+        switch (pacmanAnimPos) {
+            case 1:
+                g2d.drawImage(pacmanRight[0], pacman_Coords.getX_pos() + 1, 
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 2:
+                g2d.drawImage(pacmanRight[1], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+            case 3:
+                g2d.drawImage(pacmanRight[2], pacman_Coords.getX_pos() + 1,
+                        pacman_Coords.getY_pos() + 1, this);
+                break;
+             case 4:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+            default:
+                g2d.drawImage(pacmanIdle, pacman_Coords.getX_pos()+1,
+                        pacman_Coords.getY_pos()+1,this);
+        }
+    }
+
+    public void DrawMaze(Graphics2D g2d) {
+        for (int y = 0; y < frameHeight; y+=BLOCK_SIZE) {
+                    for (int x = 0; x < frameWidth; x+=BLOCK_SIZE) {
+                
+                g2d.setBackground(mazeColor);
+                g2d.setStroke(new BasicStroke(2));
+                
+                System.out.print(
+                        Character.toString(board[y/BLOCK_SIZE][x/BLOCK_SIZE]));
+                switch(board[y/BLOCK_SIZE][x/BLOCK_SIZE]) {
+                    
+                case('#'):
+                    g2d.setColor(mazeColor);
+                    g2d.drawRect(x,y,BLOCK_SIZE,BLOCK_SIZE);
+                    break;
+                
+                case('.') :
+                    g2d.setColor(foodColor);
+                    g2d.fillOval(x+12, y+12, BLOCK_SIZE/4, BLOCK_SIZE/4);
+                    break;
+                
+                case('-') :
+                    g2d.setColor(gateColor);
+                    g2d.drawLine(x, y, x+BLOCK_SIZE, y);
+                    break;
+                
+                case('O'):
+                    g2d.setColor(foodColor);
+                    g2d.fillOval(x+5,y+5,2*BLOCK_SIZE/3,2*BLOCK_SIZE/3);
+                
+                }  
+            }
+            System.out.println();
+        }
+    }
+    private void printLives() {
+        switch(game.lives) {
+            case 0:
+                GUI.lives1.setVisible(false);
+                GUI.lives2.setVisible(false);
+                GUI.lives3.setVisible(false);
+                break;
+            case 1:
+                GUI.lives1.setVisible(true);
+                GUI.lives2.setVisible(false);
+                GUI.lives3.setVisible(false);
+                break;
+            case 2:
+                GUI.lives1.setVisible(true);
+                GUI.lives2.setVisible(true);
+                GUI.lives3.setVisible(false);
+                break;
+            case 3:
+                GUI.lives1.setVisible(true);
+                GUI.lives2.setVisible(true);
+                GUI.lives3.setVisible(true);
+                break;     
+        }      
+    }
+    private void printScore() {
+        int score = game.score;
+        int highscore = game.highscore;
+        if (score > highscore) {
+            game.highscore = score;
+            highscore = score;
+        }
+        String sc = Integer.toString(score);
+        String hsc = Integer.toString(highscore);
+        GUI.score.setText(sc);
+        GUI.highScore.setText(hsc);
+        
+    }
     /**
      * Draw the game to the screen. It is called through repaint()
      * method in GameLoop() method.
@@ -290,13 +674,21 @@ public class GameGraphics extends GamePanel {
         switch (gameState)
         {
             case PLAYING:
+                printScore();
+                printLives();
+                DrawMaze(g2d);
+                drawGhosts0(g2d);
+                drawPacman(g2d);
             break;
             case GAMEOVER:
-                //...
+                DrawMaze(g2d);
+                drawGhosts(g2d);
             break;
             case MAIN_MENU:
-                //...
+                DrawMaze(g2d);
+                drawGhosts(g2d);
             break;
+                
         }
     }
     
@@ -306,11 +698,13 @@ public class GameGraphics extends GamePanel {
      */
     private void newGame()
     {
-        // We set gameTime to zero and lastTime to current time for later calculations.
+        // We set gameTime to zero and lastTime 
+        //to current time for later calculations.
         gameTime = 0;
         lastTime = System.nanoTime();
         
-        game = new Game();
+        game = new Game(this);     
+        System.out.println("Game has started! Good Luck!");
     }
     
     
@@ -322,7 +716,35 @@ public class GameGraphics extends GamePanel {
     @Override
     public void keyReleasedFramework(KeyEvent e)
     {
+        int key = e.getKeyCode();
         
+        if(gameState == GameState.PLAYING) {
+            switch (key) {
+                case KeyEvent.VK_LEFT:
+                    game.vel_x = -1;
+                    game.vel_y = 0;
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    game.vel_x = 1;
+                    game.vel_y = 0;
+                    break;
+                case KeyEvent.VK_UP:
+                    game.vel_x = 0;
+                    game.vel_y = -1;
+                    break;
+                case KeyEvent.VK_DOWN:
+                    game.vel_x = 0;
+                    game.vel_y = 1;
+                    break;
+                default:
+                    break;
+                    
+            }
+            System.out.println("New directions are: " + 
+                    game.vel_x + ", " + game.vel_y);
+
+            
+        }
     }
     
    
