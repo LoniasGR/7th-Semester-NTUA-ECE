@@ -194,6 +194,27 @@ public class GUI extends JFrame {
             return name;
     }
     
+    public void showHighscores (String [][] highscores) {
+        
+        int counter = 0;
+        String message  = "HIGHSCORES\n";
+        System.out.println(message);
+        if (highscores[0][1] == null) {
+            message += "No highscores yet! Play to make one!";
+        }
+        else {
+            while (counter <= 4 && highscores[counter][1] != null){
+                message += (highscores[counter][0] + "-"
+                        + highscores[counter][1] + "\n");
+                counter++;
+            }
+            
+            JOptionPane.showMessageDialog(this, 
+                    message, "HIGHSCORES", JOptionPane.INFORMATION_MESSAGE);
+        }
+        
+    }
+    
     public int showLossMessage () {
         Object[] options = {"Restart Game", "Exit Game"};
         
@@ -210,16 +231,8 @@ public class GUI extends JFrame {
     }
     
     public void closeMessage() {
-        Window[] windows = Window.getWindows();
-                for (Window window : windows) {
-                    if (window instanceof JDialog) {
-                        JDialog dialog = (JDialog) window;
-                        if (dialog.getContentPane().getComponentCount() == 1
-                            && dialog.getContentPane().getComponent(0) instanceof JOptionPane){
-                            dialog.dispose();
-                        }
-                    }
-        }
+     JOptionPane.getRootFrame().dispose();   
+
     }
    
 

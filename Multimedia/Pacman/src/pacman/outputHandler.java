@@ -6,7 +6,6 @@
 package pacman;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 
@@ -32,7 +31,7 @@ public class outputHandler {
     public void writeToFile (String[][] scores) {
         int i = 0;
    
-        while (scores[i][0] != null && i<5) {
+        while (i<=4 && scores[i][0] != null) {
             String line = scores[i][0] + "-" + scores[i][1];
             
             writer.println(line);

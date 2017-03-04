@@ -13,11 +13,11 @@ import java.awt.MediaTracker;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
@@ -116,6 +116,8 @@ public class GameGraphics extends GamePanel {
     public boolean scared;
     public Coordinates pacman_Coords;
     public ArrayList<Coordinates> ghost_Coords;
+    
+    public String highscores[][];
         
     
     public GameGraphics (GUI gui)
@@ -138,6 +140,8 @@ public class GameGraphics extends GamePanel {
                 } catch (InterruptedException ex) {
                     Logger.getLogger(GameGraphics.class.getName()).
                             log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(GameGraphics.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         };
@@ -150,7 +154,7 @@ public class GameGraphics extends GamePanel {
      * objects for this class, variables and objects for the 
      * actual game can be set in Game.java.
      */
-    private void Initialize() throws FileNotFoundException
+    private void Initialize() throws FileNotFoundException, IOException
     {
         FileHandler fh = null;
         try {
@@ -165,9 +169,20 @@ public class GameGraphics extends GamePanel {
         
         fh.close();
         
+        
+        fh = new FileHandler("highscores/highscores.txt");
+        
+        
+        
+        highscores = fh.ReadHighscores();
+        
+        fh.close();
+        
+        
         reset();
         
         addActionListenerForMenu();
+        addActionListenerForHighScores();
         
         gui.start.setActionCommand("Start");
         gui.start.addActionListener((ActionEvent e) -> {
@@ -277,7 +292,7 @@ public class GameGraphics extends GamePanel {
      * In specific intervals of time (GAME_UPDATE_PERIOD) the game/logic 
      * is updated and then the game is drawn on the screen.
      */
-    private void GameLoop() throws FileNotFoundException, InterruptedException
+    private void GameLoop() throws FileNotFoundException, InterruptedException, IOException
     {
         // This variables are used for calculating the time that defines 
         //for how long we should put threat to sleep to meet the GAME_FPS.
@@ -285,6 +300,7 @@ public class GameGraphics extends GamePanel {
         
         boolean death = false;
         int leaderboard;
+        String name;
         
         while(true)
         {
@@ -301,15 +317,16 @@ public class GameGraphics extends GamePanel {
                     break;
                 case WIN:
                     leaderboard = game.checkForHighscore();
-                    String name = gui.showHighscoreMessage(leaderboard);
-            {
-                try {
-                    game.addHighscore(leaderboard, name);
-                } catch (UnsupportedEncodingException ex) {
-                    Logger.getLogger(GameGraphics.class.getName())
-                            .log(Level.SEVERE, null, ex);
-                }
-            }
+                    if (leaderboard != -1) {
+                   
+                        name = gui.showHighscoreMessage(leaderboard);
+                        try {
+                            game.addHighscore(leaderboard, name);
+                        } catch (UnsupportedEncodingException ex) {
+                            Logger.getLogger(GameGraphics.class.getName())
+                                    .log(Level.SEVERE, null, ex);
+                        }
+                    }
                     
                     
                     int replay = gui.showVictoryMessage();
@@ -326,6 +343,19 @@ public class GameGraphics extends GamePanel {
                     break;
                 case GAMEOVER:
                    leaderboard = game.checkForHighscore();
+                   System.out.println("Highscore! Position is " +leaderboard);
+
+                   if (leaderboard != -1) {
+                   
+                        name = gui.showHighscoreMessage(leaderboard);
+                        try {
+                            game.addHighscore(leaderboard, name);
+                        } catch (UnsupportedEncodingException ex) {
+                            Logger.getLogger(GameGraphics.class.getName())
+                                    .log(Level.SEVERE, null, ex);
+                        }
+                    }
+                    
                     int restart = gui.showLossMessage();
                     if (restart == JOptionPane.YES_OPTION) {
                         System.out.println("Game Restarting");
@@ -392,12 +422,6 @@ public class GameGraphics extends GamePanel {
                  Thread.sleep(timeLeft);
             } catch (InterruptedException ex) { }
         }
-    }
-    
-    private void addActionListenerForMenu () {
-         gui.exit.addActionListener((ActionEvent arg0) -> {
-            System.exit(0);
-        });
     }
     
     
@@ -746,6 +770,21 @@ public class GameGraphics extends GamePanel {
             
         }
     }
+    
+    private void addActionListenerForMenu () {
+        gui.exit.addActionListener((ActionEvent arg0) -> {
+            System.exit(0);
+        });
+    }
+    
+    private void addActionListenerForHighScores () {
+        gui.highscores.addActionListener((ActionEvent arg0) -> {
+            gui.showHighscores(highscores);
+        });
+    }
+    
+        
+    
     
    
 }

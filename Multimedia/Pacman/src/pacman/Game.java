@@ -46,7 +46,6 @@ public class Game {
     public int collisions;
     public int collisionsCalculated;
     public int lives;
-    public String [][] highscores;
     
     private double PACMAN_SPEED;
     private double PACMAN_NORMAL_SPEED;
@@ -60,13 +59,7 @@ public class Game {
         logicThread = new Thread() {
             @Override
             public void run(){
-                try {
-                    // Sets variables and objects for the game.
-                    Initialize();
-                } catch (IOException ex) {
-                    Logger.getLogger(Game.class.getName())
-                            .log(Level.SEVERE, null, ex);
-                }
+                Initialize();
               
                 
                 GameGraphics.gameState = GameGraphics.GameState.PLAYING;
@@ -86,17 +79,8 @@ public class Game {
    /**
      * Set variables and objects for the game.
      */
-    public void Initialize() throws IOException
+    public void Initialize()
     {
-        
-        FileHandler fh = new FileHandler("highscores/highscores.txt");
-        
-        
-        
-        highscores = fh.ReadHighscores();
-        
-        fh.close();
-        
         
         
         speedup = false;
@@ -117,15 +101,15 @@ public class Game {
         
         score = 0;
         
-        if (highscores[0][1]!= null) {
-        highscore = Integer.parseInt(highscores[0][1]);
+        if (gg.highscores[0][1]!= null) {
+        highscore = Integer.parseInt(gg.highscores[0][1]);
         }
         else 
             highscore = 0;
         
         collisions = 0;
         collisionsCalculated = 0;
-        lives = 1;
+        lives = 3;
         
         pacman_x_prev = gg.pacman_Coords.getX_pos();
         pacman_y_prev = gg.pacman_Coords.getY_pos();
@@ -167,9 +151,13 @@ public class Game {
     
     public int checkForHighscore() {
         int i = 0;
-        while (highscores[i][1] != null) {
-            if (score > Integer.parseInt(highscores[i][1]))
+        if (gg.highscores[0][1] == null) {
+            return 0;
+        }
+        while ( i<=4 && gg.highscores[i][1] != null) {
+            if (score > Integer.parseInt(gg.highscores[i][1]))
                 return i;
+            i++;
         }
         return -1;
             
@@ -179,14 +167,14 @@ public class Game {
             UnsupportedEncodingException{
         
         for(int k=3;k>= position; k--) {
-            System.arraycopy(highscores[k], 0, highscores[k+1], 0, 2);
+            System.arraycopy(gg.highscores[k], 0, gg.highscores[k+1], 0, 2);
         }
         
-        highscores[position][0] = name;
-        highscores[position][1] = Integer.toString(score);
+        gg.highscores[position][0] = name;
+        gg.highscores[position][1] = Integer.toString(score);
         
         outputHandler oh = new outputHandler("highscores/highscores.txt");
-        oh.writeToFile(highscores);
+        oh.writeToFile(gg.highscores);
         oh.close();
         
     }
