@@ -71,7 +71,8 @@ public class GameGraphics extends GamePanel {
      * Possible states of the game
      */
     public static enum GameState
-    {STARTING, MAIN_MENU, PLAYING, GAMEOVER, WIN, PAUSE, DEATH, RESTART,NEXTLVL}
+    {STARTING, MAIN_MENU, PLAYING, GAMEOVER, WIN, PAUSE, DEATH, 
+    RESTART, NEXTLVL, WAIT}
     
     /**
      * Current state of the game
@@ -123,7 +124,7 @@ public class GameGraphics extends GamePanel {
     private Image[] ghostScared;
     
     private FolderReader fr;
-    private String [] boards;
+    public String [] boards;
     private int currentBoard;
     
     private int pacmanAnimPos;
@@ -137,6 +138,7 @@ public class GameGraphics extends GamePanel {
     public String highscores[][];
     
     public Thread gameThread;
+    private boolean started;
         
     
     public GameGraphics (GUI gui)
@@ -173,6 +175,7 @@ public class GameGraphics extends GamePanel {
      */
     private void Initialize() throws FileNotFoundException, IOException
     {
+        started = false;
         fr = new FolderReader("boards");
         boards = fr.getFiles();
         currentBoard = 0;
@@ -194,6 +197,7 @@ public class GameGraphics extends GamePanel {
         addActionListenerForMenu();
         addActionListenerForHighScores();
         addActionListenerForStart();
+        addActionListenerForLoad();
         
         gui.start.setActionCommand("Start");
         gui.mstart.setActionCommand("Start");
@@ -204,6 +208,10 @@ public class GameGraphics extends GamePanel {
                     gui.start.setEnabled(false);
                     gui.mstart.setActionCommand("Restart");
                     newGame();
+                }
+                else if("Restart".equals(e.getActionCommand())) {
+                    gui.start.setEnabled(false);
+                    gameState = gameState.RESTART;
                 }
             }
         });        
@@ -349,6 +357,8 @@ public class GameGraphics extends GamePanel {
 
                     
                     lastTime = System.nanoTime();
+                    break;
+                case WAIT:
                     break;
                 case WIN:
                     System.out.println("currentBoard" + currentBoard);
@@ -769,6 +779,10 @@ public class GameGraphics extends GamePanel {
                 DrawMaze(g2d);
                 drawGhosts(g2d);
             break;
+            case WAIT:
+                DrawMaze (g2d);
+                drawGhosts (g2d);
+                drawPacman (g2d);
                 
         }
     }
@@ -784,7 +798,8 @@ public class GameGraphics extends GamePanel {
         gameTime = 0;
         lastTime = System.nanoTime();
         
-        game = new Game(this);     
+        started = true;
+        game = new Game(this);    
         System.out.println("Game has started! Good Luck!");
     }
     
@@ -841,20 +856,44 @@ public class GameGraphics extends GamePanel {
     }
     
     private void addActionListenerForStart () {
-        gui.mstart.addActionListener (new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-                if ("Start".equals(arg0.getActionCommand())) {
-                    gui.mstart.setActionCommand("Restart");
-                    gui.start.setEnabled(false);
-                    newGame();
+        gui.mstart.addActionListener ((ActionEvent arg0) -> {
+            if ("Start".equals(arg0.getActionCommand())) {
+                gui.mstart.setActionCommand("Restart");
+                gui.start.setEnabled(false);
+                newGame();
+            }
+            else if("Restart".equals(arg0.getActionCommand())) {
+                gameState = GameState.RESTART;
+            }
+        });        
+    }
+    
+    private void addActionListenerForLoad () {
+        gui.load.addActionListener ((ActionEvent arg0) -> {
+            String s = gui.chooseBoardMessage();
+            int i;
+            for(i = 0; i < boards.length; i++) {
+                if (boards[i] == s)
+                    break;
+            }
+            currentBoard = i;
+            if (started) {
+            gui.start.setEnabled(true);
+            gui.start.setActionCommand("Restart");
+            restart();
+            gameState = GameState.WAIT;
+            }
+            else {
+                newGame();
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(GameGraphics.class.getName())
+                            .log(Level.SEVERE, null, ex);
                 }
-                else if("Restart".equals(arg0.getActionCommand())) {
-                    gameState = GameState.RESTART;
-                }
+                gameState = GameState.RESTART;
             }
         });
-        
     }
     
     

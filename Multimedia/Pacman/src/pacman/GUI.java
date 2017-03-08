@@ -256,6 +256,19 @@ public class GUI extends JFrame {
         return n;
     }
     
+    public String chooseBoardMessage () {        
+       
+        String s = (String)JOptionPane.showInputDialog(
+                    this,
+                    "Pick board:\n",
+                    "Pick a board:",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    gamePanel.boards,
+                    gamePanel.boards[0]);
+        return s;
+    }
+    
     /**
      * Used to close popup messages.
      */

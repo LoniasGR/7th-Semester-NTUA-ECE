@@ -140,7 +140,8 @@ public class Game {
             if (GameGraphics.gameState != GameGraphics.GameState.DEATH &&
                     GameGraphics.gameState != GameGraphics.GameState.GAMEOVER &&
                     GameGraphics.gameState != GameGraphics.GameState.WIN &&
-                    GameGraphics.gameState != GameGraphics.GameState.NEXTLVL) {
+                    GameGraphics.gameState != GameGraphics.GameState.NEXTLVL &&
+                    GameGraphics.gameState != GameGraphics.GameState.WAIT) {
                 moveGhosts();
                 movePacman();
                 checkCollisions();
