@@ -53,7 +53,7 @@ public class GameGraphics extends GamePanel {
      * FPS - Frames per second
      * How many times per second the game should update?
      */
-    private final int GAME_FPS = 30;
+    private final int GAME_FPS = 25;
     
     /**
      * Pause between updates. It is in nanoseconds.
@@ -118,6 +118,8 @@ public class GameGraphics extends GamePanel {
     public ArrayList<Coordinates> ghost_Coords;
     
     public String highscores[][];
+    
+    public Thread gameThread;
         
     
     public GameGraphics (GUI gui)
@@ -129,7 +131,7 @@ public class GameGraphics extends GamePanel {
         gameState = GameState.STARTING;
         
         //We start game in new thread.
-        Thread gameThread = new Thread() {
+        gameThread = new Thread() {
             @Override
             public void run(){
                 try {
@@ -137,11 +139,9 @@ public class GameGraphics extends GamePanel {
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(GameGraphics.class.getName())
                             .log(Level.SEVERE, null, ex);
-                } catch (InterruptedException ex) {
+                } catch (InterruptedException | IOException ex) {
                     Logger.getLogger(GameGraphics.class.getName()).
                             log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(GameGraphics.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         };
@@ -156,19 +156,8 @@ public class GameGraphics extends GamePanel {
      */
     private void Initialize() throws FileNotFoundException, IOException
     {
-        FileHandler fh = null;
-        try {
-            fh = new FileHandler("boards/board1.txt");
-            board = fh.ReadInput();
         
-        }
-        catch (FileNotFoundException e){
-            System.err.print(e.getMessage());
-            System.exit(1);
-        }
-        
-        fh.close();
-        
+        FileHandler fh;
         
         fh = new FileHandler("highscores/highscores.txt");
         
@@ -193,6 +182,20 @@ public class GameGraphics extends GamePanel {
         });        
     }
     private void reset() {
+        
+            FileHandler fh = null;
+        try {
+            fh = new FileHandler("boards/board2.txt");
+            board = fh.ReadInput();
+        
+        }
+        catch (FileNotFoundException e){
+            System.err.print(e.getMessage());
+            System.exit(1);
+        }
+        
+        fh.close();
+        
         pacDir_x = 0;
         pacDir_y = 0;
         pacmanAnimPos = 2;
@@ -360,17 +363,17 @@ public class GameGraphics extends GamePanel {
                     if (restart == JOptionPane.YES_OPTION) {
                         System.out.println("Game Restarting");
                         gui.closeMessage();
-                        GameGraphics.gameState = GameGraphics.GameState.RESTART;
+                        System.out.println("AHOI");
+                        gameState = GameState.RESTART;
                     }
-                    if (restart == JOptionPane.NO_OPTION 
+                    else if (restart == JOptionPane.NO_OPTION 
                             || restart == JOptionPane.CLOSED_OPTION)
                         System.exit(0);
                 break;
                 case RESTART:
-                    System.out.println("Game restarting!");
-                    Initialize();
-                    game.reset();
-                    game.lives = 3;
+                    System.out.println("11111 restarting!");
+                    reset();
+                    game.Initialize();
                     gameState = GameState.PLAYING; 
                     break;
                     
@@ -380,7 +383,7 @@ public class GameGraphics extends GamePanel {
                     game.reset();
                     gameState = GameState.PLAYING;
                     death = true;
-                    Thread.sleep(5);
+                    //Thread.sleep(5);
                 break;
                 
                 case MAIN_MENU:
@@ -461,10 +464,12 @@ public class GameGraphics extends GamePanel {
         for(Ghost ghost1 : game.AI.ghosts) {
             switch(ghostAnimPos[c]) {
                 case 1:
+                case 2:
                     g2d.drawImage(ghostScared[0], ghost1.getX_pos(),ghost1.getY_pos(),
                         this);
                     break;
-                case 2:
+                case 3:
+                case 4:
                     g2d.drawImage(ghostScared[1], ghost1.getX_pos(),ghost1.getY_pos(),
                         this);               
                     break;
@@ -472,7 +477,7 @@ public class GameGraphics extends GamePanel {
                     g2d.drawImage(ghostScared[0], ghost1.getX_pos(),ghost1.getY_pos(),
                         this);
             }
-            if(ghostAnimPos[c]++ == 3)
+            if(ghostAnimPos[c]++ == 5)
                 ghostAnimPos[c] = 1;
         
             c++;
@@ -484,10 +489,12 @@ public class GameGraphics extends GamePanel {
         for(Coordinates ghost1 : ghost_Coords) {
             switch(ghostAnimPos[c]) {
                 case 1:
+                case 2:
                     g2d.drawImage(ghost[0], ghost1.getX_pos(),ghost1.getY_pos(),
                         this);
                     break;
-                case 2:
+                case 3:
+                case 4:
                     g2d.drawImage(ghost[1], ghost1.getX_pos(),ghost1.getY_pos(),
                         this);               
                     break;
@@ -495,7 +502,7 @@ public class GameGraphics extends GamePanel {
                     g2d.drawImage(ghost[0], ghost1.getX_pos(),ghost1.getY_pos(),
                         this);
             }
-            if(ghostAnimPos[c]++ == 3)
+            if(ghostAnimPos[c]++ == 5)
                 ghostAnimPos[c] = 1;
         
             c++;

@@ -9,11 +9,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
 import java.io.IOException;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -201,6 +198,7 @@ public class GUI extends JFrame {
         System.out.println(message);
         if (highscores[0][1] == null) {
             message += "No highscores yet! Play to make one!";
+            System.out.println(message);
         }
         else {
             while (counter <= 4 && highscores[counter][1] != null){
@@ -208,10 +206,9 @@ public class GUI extends JFrame {
                         + highscores[counter][1] + "\n");
                 counter++;
             }
-            
+        }
             JOptionPane.showMessageDialog(this, 
                     message, "HIGHSCORES", JOptionPane.INFORMATION_MESSAGE);
-        }
         
     }
     
@@ -232,7 +229,6 @@ public class GUI extends JFrame {
     
     public void closeMessage() {
      JOptionPane.getRootFrame().dispose();   
-
     }
    
 

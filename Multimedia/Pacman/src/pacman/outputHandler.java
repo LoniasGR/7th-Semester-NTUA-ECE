@@ -16,7 +16,12 @@ import java.io.UnsupportedEncodingException;
 public class outputHandler {
     
     private PrintWriter writer = null;
-    
+    /**
+     * Opens a PrintWriter class to edit later.
+     * @param path path to file to be written
+     * @throws FileNotFoundException
+     * @throws UnsupportedEncodingException 
+     */
     outputHandler(String path) throws FileNotFoundException, 
             UnsupportedEncodingException {
         
@@ -27,7 +32,10 @@ public class outputHandler {
             System.err.println(e);
             }
     }
-    
+    /**
+     * Takes scores array and writes them to file.
+     * @param scores String 2-D array with name and score.
+     */
     public void writeToFile (String[][] scores) {
         int i = 0;
    
@@ -38,7 +46,9 @@ public class outputHandler {
             i++;    
         }
     }
-    
+    /**
+     * Close the PrinterWriter object for safety.
+     */
     public void close() {
         writer.close();
     }

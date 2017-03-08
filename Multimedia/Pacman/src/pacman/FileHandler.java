@@ -19,7 +19,11 @@ public class FileHandler
     
     private String pathToFile;
     private Scanner inputFile;
-    
+    /**
+     * Create a new Scanner object to read the file.
+     * @param name path to file.
+     * @throws FileNotFoundException 
+     */
     public FileHandler(String name) throws FileNotFoundException 
     {
         this.pathToFile = name;
@@ -27,19 +31,19 @@ public class FileHandler
         this.inputFile = new Scanner(new File(pathToFile));
         }
         catch (FileNotFoundException e) {
-           /*Needs to be implemented! 
-            Ideas:
-                1) Exit the game if the file is not found.
-                2) Ask again for a file.
-                3) Pick a default file.
-            */
+           System.err.println(e);
         }
     }
-    
+    /**
+     * Close scanner.
+     */
     public void close() {
         inputFile.close();
     }
-    
+    /**
+     * Read the board file and return a 2-D array.
+     * @return 2-D char array of the board. 
+     */
     public char[][] ReadInput ()
     {
         char[][] fileArray = new char[22][19];
@@ -59,6 +63,12 @@ public class FileHandler
     return fileArray; 
     }
     
+    /**
+     * Read highscores file and return a 2-D array. 5 highscores max supported.
+     * @return String 2-D array consisting of name-score. 
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
     public String[][] ReadHighscores () throws FileNotFoundException, IOException 
     {
         String[][] scores;

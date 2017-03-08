@@ -151,6 +151,8 @@ public class AIMovement {
                 directions[1]++;
             if(gg.board[y][x+1] != '#' && gg.board[y][x+1] != '-')
                 directions[0]++;
+            if (directions[3] == 0 && directions[1] == 0 && directions[0] == 0)
+                directions[2]++;
         }
         if (ghost.getVel_x() == -1) {
             if(gg.board[y+1][x] != '#' && gg.board[y+1][x] != '-')
@@ -159,6 +161,8 @@ public class AIMovement {
                 directions[3]++;
             if(gg.board[y][x-1] != '#' && gg.board[y][x-1] != '-')
                 directions[2]++;
+            if (directions[1] == 0 && directions[3] == 0 && directions[2] == 0)
+                directions[0]++;
         }
         if (ghost.getVel_y() == 1) {
             if (gg.board[y][x+1] != '#' && gg.board[y][x+1] != '-')
@@ -167,6 +171,8 @@ public class AIMovement {
                 directions[2]++;
             if(gg.board[y+1][x] !='#' && gg.board[y+1][x] !='-')
                 directions[1]++;
+             if (directions[1] == 0 && directions[0] == 0 && directions[2] == 0)
+                directions[3]++;
         }        
         if (ghost.getVel_y() == -1) {
             if (gg.board[y][x+1] != '#' && gg.board[y][x+1] != '-')
@@ -175,6 +181,8 @@ public class AIMovement {
                 directions[2]++;
             if(gg.board[y-1][x] !='#' && gg.board[y-1][x] !='-')
                 directions[3]++;
+             if (directions[0] == 0 && directions[3] == 0 && directions[2] == 0)
+                directions[1]++;
         }
         
         int total_directions = 0;

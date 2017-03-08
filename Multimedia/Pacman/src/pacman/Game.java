@@ -8,7 +8,6 @@ package pacman;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -138,13 +137,18 @@ public class Game {
     {   
         while(true) {
             checkLives();
-            if (GameGraphics.gameState != GameGraphics.GameState.DEATH) {
+            if (GameGraphics.gameState != GameGraphics.GameState.DEATH &&
+                    GameGraphics.gameState != GameGraphics.GameState.GAMEOVER &&
+                    GameGraphics.gameState != GameGraphics.GameState.WIN) {
                 moveGhosts();
                 movePacman();
                 checkCollisions();
                 checkCookies();
+                Thread.sleep(10);
             }
-            Thread.sleep(10);
+            else {
+                Thread.sleep(50);
+            }
 
         }
     }
@@ -413,5 +417,4 @@ public class Game {
     public void closeGame () {
         logicThread.interrupt();
     }
-   
 }
