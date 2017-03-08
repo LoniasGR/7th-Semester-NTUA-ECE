@@ -27,11 +27,16 @@ import javax.swing.JOptionPane;
  */
 public class GameGraphics extends GamePanel {
         
+    /**
+     * Size of each block inside the game.
+     */
     public int BLOCK_SIZE = 24;
+    
     /**
      * Width of the frame.
      */
     public static int frameWidth = 456;
+    
     /**
      * Height of the frame.
      */
@@ -70,7 +75,6 @@ public class GameGraphics extends GamePanel {
     /**
      * Current state of the game
      */
-    
     public static GameState gameState;
     
     /**
@@ -78,9 +82,14 @@ public class GameGraphics extends GamePanel {
      */
     private long gameTime;
     
-    // It is used for calculating elapsed time.
+    /**
+     * It is used for calculating elapsed time.
+     */
     private long lastTime;
     
+    /**
+     * pacman x and y facing direction
+     */
     public int pacDir_x;
     public int pacDir_y;
     
@@ -88,6 +97,7 @@ public class GameGraphics extends GamePanel {
     // The actual game
     private Game game;
     
+    //The GUI
     private final GUI gui;
     
     //the game's board
@@ -98,8 +108,10 @@ public class GameGraphics extends GamePanel {
     private final Color foodColor = Color.orange;
     private final Color gateColor = Color.GRAY; 
     
+    //media tracker for images
     private MediaTracker images;
     
+    //images for the game
     private Image pacmanIdle;
     private ImageIcon pacmanIcon;
     private Image[] pacmanUp;
@@ -168,7 +180,7 @@ public class GameGraphics extends GamePanel {
         fh.close();
         
         
-        reset();
+        restart();
         
         addActionListenerForMenu();
         addActionListenerForHighScores();
@@ -181,8 +193,7 @@ public class GameGraphics extends GamePanel {
             }
         });        
     }
-    private void reset() {
-        
+    private void restart() {
             FileHandler fh = null;
         try {
             fh = new FileHandler("boards/board2.txt");
@@ -196,6 +207,10 @@ public class GameGraphics extends GamePanel {
         
         fh.close();
         
+        reset();
+    }
+    private void reset() {
+
         pacDir_x = 0;
         pacDir_y = 0;
         pacmanAnimPos = 2;
@@ -372,7 +387,7 @@ public class GameGraphics extends GamePanel {
                 break;
                 case RESTART:
                     System.out.println("11111 restarting!");
-                    reset();
+                    restart();
                     game.Initialize();
                     gameState = GameState.PLAYING; 
                     break;
@@ -383,7 +398,6 @@ public class GameGraphics extends GamePanel {
                     game.reset();
                     gameState = GameState.PLAYING;
                     death = true;
-                    //Thread.sleep(5);
                 break;
                 
                 case MAIN_MENU:

@@ -55,6 +55,12 @@ public class GUI extends JFrame {
     public JMenuItem highscores;
     public JMenuItem exit;
     
+    /**
+     * GUI constructor.
+     * Creates a new JFrame and puts all Jelements needed inside. 
+     * @param s title of the JFrame
+     * @throws IOException 
+     */
     public GUI (String s) throws IOException {
         super(s);
         
@@ -82,10 +88,11 @@ public class GUI extends JFrame {
         organiseGUI();
         createGUI();
         createMenuBar();
-        
-        
-        
     }
+    
+    /**
+     * Organizes the position of each element inside the JFrame.
+     */
     private void organiseGUI () {
         this.setLayout(new BorderLayout());
 
@@ -128,15 +135,19 @@ public class GUI extends JFrame {
         
     }
     
+    /**
+     * Create the JFrame.
+     */
     private void createGUI() {
         setSize(600,800);
         setLocationRelativeTo(null);       
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(400,600));
-
-        
+        setMinimumSize(new Dimension(400,600));    
     }
     
+    /**
+     * Create the menu bar.
+     */
     private void createMenuBar() {
         menubar = new JMenuBar();
         setJMenuBar(menubar);
@@ -153,15 +164,20 @@ public class GUI extends JFrame {
         gamemenu.add(load);
         gamemenu.add(highscores);
         gamemenu.add(exit);
-        
-       
     } 
     
+    /**
+     * Make the JFrame visible.
+     */
     public void setVisible() {
         this.pack();
         this.setVisible(true);
     }
 
+    /**
+     * Display victory message.
+     * @return option the user clicked.
+     */
     public int showVictoryMessage () {
         Object[] options = {"Restart Game", "Exit Game"};
         
@@ -177,6 +193,12 @@ public class GUI extends JFrame {
         return n;
     }
     
+    /**
+     * Shows a congratulations message for making a highscore and asks 
+     * for a name.
+     * @param position position in the leaderboard
+     * @return the name the user picked.
+     */
     public String showHighscoreMessage (int position) {
         position++;
         String congrats = "Congratulations you made it to the leaderboard"
@@ -191,6 +213,10 @@ public class GUI extends JFrame {
             return name;
     }
     
+    /**
+     * Displays the highscores popup.
+     * @param highscores name and score for the best 5 highscores.
+     */
     public void showHighscores (String [][] highscores) {
         
         int counter = 0;
@@ -209,9 +235,12 @@ public class GUI extends JFrame {
         }
             JOptionPane.showMessageDialog(this, 
                     message, "HIGHSCORES", JOptionPane.INFORMATION_MESSAGE);
-        
     }
     
+    /**
+     * Show loss message.
+     * @return the action the user clicked.
+     */
     public int showLossMessage () {
         Object[] options = {"Restart Game", "Exit Game"};
         
@@ -227,6 +256,9 @@ public class GUI extends JFrame {
         return n;
     }
     
+    /**
+     * Used to close popup messages.
+     */
     public void closeMessage() {
      JOptionPane.getRootFrame().dispose();   
     }

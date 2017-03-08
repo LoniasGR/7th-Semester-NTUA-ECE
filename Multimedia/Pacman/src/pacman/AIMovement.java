@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 /**
- *
+ * This class is used to determine which way a ghost should move.
  * @author Leonidas Avdelas
  */
 public class AIMovement {
@@ -21,6 +21,11 @@ public class AIMovement {
     private final GameGraphics gg;
     public ArrayList<Ghost> ghosts;
     
+    /**
+     * AIMovement constructor.
+     * Get information about each ghost.
+     * @param game Game Object.
+     */
     public AIMovement (Game game) {
         this.game = game;
         this.gg = game.gg;
@@ -35,6 +40,9 @@ public class AIMovement {
         }
     }
     
+    /**
+     * If ghost has reached the cave, then it can calm down.
+     */
     public void calm () {
                 
         for (Ghost ghost : ghosts) {
@@ -50,12 +58,18 @@ public class AIMovement {
         }
     }
     
+    /**
+     * Make all ghosts scared.
+     */
     public void getScared () {
         for (Ghost ghost : ghosts) {
             ghost.getScared ();
         }
     }
     
+    /** 
+     * When the ghosts get scared, they change direction.
+     */
     public void changeDirection () {
         for (Ghost ghost : ghosts) {
             ghost.setVel_x(- ghost.getVel_x());
@@ -63,6 +77,11 @@ public class AIMovement {
         }
     }
     
+    /**
+     * Checks for collision between ghost and pacman.
+     * @param ghost ghost to check.
+     * @return true if ghost collides with pacman, false else
+     */
     private boolean checkForCollision (Ghost ghost) {
         int x = 2*ghost.getX_pos()/gg.BLOCK_SIZE;
         int y = 2*ghost.getY_pos()/gg.BLOCK_SIZE;
@@ -88,6 +107,9 @@ public class AIMovement {
         return false;        
     }
     
+    /**
+     * Main function use to decide the movement of each ghost.
+     */
     public void moveGhosts () {
         for (Ghost ghost : ghosts) {
             
@@ -138,6 +160,10 @@ public class AIMovement {
         }
     }
     
+    /** 
+     * Check if ghost is in acrossing and has more than one ways to go.
+     * @param ghost ghost we are checking.
+     */
     private void checkForCrossing (Ghost ghost) {
         for (int i=0; i < 4; i++)
             directions[i] = 0;
@@ -225,6 +251,14 @@ public class AIMovement {
             }   
         }
     }
+    
+    /**
+     * If ghost is scared, it tries to avoid pacman. So if pacman is 3 or less
+     * blocks close it runs away.
+     * @param ghost current ghost.
+     * @param directions possible directions the ghost can move.
+     * @return true if ghost has to avoid pacman, else false.
+     */
     private boolean avoidPacman(Ghost ghost, Integer [] directions) {
         int pacx = gg.pacman_Coords.getX_pos()/gg.BLOCK_SIZE;
         int pacy = gg.pacman_Coords.getY_pos()/gg.BLOCK_SIZE;
@@ -261,8 +295,16 @@ public class AIMovement {
                     return true;            
             }
         }
-    return false;
+        return false;
     }
+    
+    /**
+     * The opposite of avoid pacman. Checks if pacman is close and moves towards
+     * it.
+     * @param ghost current ghost.
+     * @param directions possible movement directions of ghost
+     * @return true if ghost can move towards pacman, else false.
+     */
     private boolean checkForPacman (Ghost ghost, Integer [] directions) {
         int pacx = gg.pacman_Coords.getX_pos()/gg.BLOCK_SIZE;
         int pacy = gg.pacman_Coords.getY_pos()/gg.BLOCK_SIZE;
@@ -297,7 +339,11 @@ public class AIMovement {
     return false;
     }
     
-
+    /**
+     * If ghost is inside the cave, it has to move towards the entrance.
+     * This function decides how the movement will be done.
+     * @param ghost current ghost.
+     */
     private void exitEntrance (Ghost ghost) {
         int x = ghost.getX_pos();
         int y = ghost.getY_pos();
@@ -324,11 +370,22 @@ public class AIMovement {
             }
         }
     }
+    
+    /** 
+     * Teleport ghost to cave if it gets eaten.
+     * @param ghost current ghost.
+     */
     private void goToCave (Ghost ghost) {
         Coordinates coord = gg.findGhostsLocation(gg.board);
         ghost.setX(coord.getX_pos());
         ghost.setY(coord.getY_pos());
     }
+    
+    /**
+     * Random number picker. Used to decide the direction the ghost will follow.
+     * @param maxVal maximum value for the random choice.
+     * @return random number between 1 and maxVal+1.
+     */
     private int pickRandom (int maxVal) {
         Random rand = new Random();
         int value = rand.nextInt(maxVal)+1;

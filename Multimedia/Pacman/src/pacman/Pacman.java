@@ -19,6 +19,7 @@ public class Pacman {
     private static GUI gui;
 
     /**
+     * Starts a pacman game and does nothing else.
      * @param args the command line arguments
      * @throws java.io.IOException
      */
