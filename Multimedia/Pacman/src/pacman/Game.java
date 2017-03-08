@@ -139,7 +139,8 @@ public class Game {
             checkLives();
             if (GameGraphics.gameState != GameGraphics.GameState.DEATH &&
                     GameGraphics.gameState != GameGraphics.GameState.GAMEOVER &&
-                    GameGraphics.gameState != GameGraphics.GameState.WIN) {
+                    GameGraphics.gameState != GameGraphics.GameState.WIN &&
+                    GameGraphics.gameState != GameGraphics.GameState.NEXTLVL) {
                 moveGhosts();
                 movePacman();
                 checkCollisions();
@@ -163,7 +164,10 @@ public class Game {
                 return i;
             i++;
         }
-        return -1;
+        if(gg.highscores[i][1] == null)
+            return i;
+        else
+            return -1;
             
     }
     

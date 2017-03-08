@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -70,7 +71,7 @@ public class GameGraphics extends GamePanel {
      * Possible states of the game
      */
     public static enum GameState
-    {STARTING, MAIN_MENU, PLAYING, GAMEOVER, WIN, PAUSE, DEATH, RESTART}
+    {STARTING, MAIN_MENU, PLAYING, GAMEOVER, WIN, PAUSE, DEATH, RESTART,NEXTLVL}
     
     /**
      * Current state of the game
@@ -121,6 +122,10 @@ public class GameGraphics extends GamePanel {
     private Image[] ghost;
     private Image[] ghostScared;
     
+    private FolderReader fr;
+    private String [] boards;
+    private int currentBoard;
+    
     private int pacmanAnimPos;
     private Integer [] ghostAnimPos;
     
@@ -168,14 +173,18 @@ public class GameGraphics extends GamePanel {
      */
     private void Initialize() throws FileNotFoundException, IOException
     {
+        fr = new FolderReader("boards");
+        boards = fr.getFiles();
+        currentBoard = 0;
+        System.out.println(boards.length);
         
         FileHandler fh;
         
         fh = new FileHandler("highscores/highscores.txt");
         
-        
-        
         highscores = fh.ReadHighscores();
+        
+        System.out.println(highscores.length);
         
         fh.close();
         
@@ -184,19 +193,27 @@ public class GameGraphics extends GamePanel {
         
         addActionListenerForMenu();
         addActionListenerForHighScores();
+        addActionListenerForStart();
         
         gui.start.setActionCommand("Start");
-        gui.start.addActionListener((ActionEvent e) -> {
-            if ("Start".equals(e.getActionCommand())) {
-                gui.start.setEnabled(false);
-                newGame();
+        gui.mstart.setActionCommand("Start");
+        gui.start.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if ("Start".equals(e.getActionCommand())) {
+                    gui.start.setEnabled(false);
+                    gui.mstart.setActionCommand("Restart");
+                    newGame();
+                }
             }
         });        
     }
     private void restart() {
+        
+       
             FileHandler fh = null;
         try {
-            fh = new FileHandler("boards/board2.txt");
+            fh = new FileHandler("boards/" + boards[currentBoard]);
             board = fh.ReadInput();
         
         }
@@ -334,6 +351,8 @@ public class GameGraphics extends GamePanel {
                     lastTime = System.nanoTime();
                     break;
                 case WIN:
+                    System.out.println("currentBoard" + currentBoard);
+                    if (currentBoard == (boards.length-1)) {
                     leaderboard = game.checkForHighscore();
                     if (leaderboard != -1) {
                    
@@ -352,12 +371,28 @@ public class GameGraphics extends GamePanel {
                     if (replay == JOptionPane.YES_OPTION) {
                         System.out.println("Game Restarting");
                         gui.closeMessage();
-                        GameGraphics.gameState = GameGraphics.GameState.RESTART;
+                        gameState = GameState.RESTART;
                     }
                     if (replay == JOptionPane.NO_OPTION 
                             || replay == JOptionPane.CLOSED_OPTION)
                         System.exit(0);
+                    }
+                    else {
+                        currentBoard++;
+                        gameState = GameState.NEXTLVL;
+
+                    }
+                    break;
                     
+                case NEXTLVL:
+                    System.out.println("Next level!");
+                    restart();
+                    int lives = game.lives;
+                    int score = game.score;
+                    game.Initialize();
+                    game.score = score;
+                    game.lives = lives;
+                    gameState = GameState.PLAYING; 
                     break;
                 case GAMEOVER:
                    leaderboard = game.checkForHighscore();
@@ -379,6 +414,7 @@ public class GameGraphics extends GamePanel {
                         System.out.println("Game Restarting");
                         gui.closeMessage();
                         System.out.println("AHOI");
+                        currentBoard = 0;
                         gameState = GameState.RESTART;
                     }
                     else if (restart == JOptionPane.NO_OPTION 
@@ -804,7 +840,22 @@ public class GameGraphics extends GamePanel {
         });
     }
     
+    private void addActionListenerForStart () {
+        gui.mstart.addActionListener (new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if ("Start".equals(arg0.getActionCommand())) {
+                    gui.mstart.setActionCommand("Restart");
+                    gui.start.setEnabled(false);
+                    newGame();
+                }
+                else if("Restart".equals(arg0.getActionCommand())) {
+                    gameState = GameState.RESTART;
+                }
+            }
+        });
         
+    }
     
     
    

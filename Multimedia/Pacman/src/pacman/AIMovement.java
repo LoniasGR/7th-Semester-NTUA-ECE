@@ -83,11 +83,11 @@ public class AIMovement {
      * @return true if ghost collides with pacman, false else
      */
     private boolean checkForCollision (Ghost ghost) {
-        int x = 2*ghost.getX_pos()/gg.BLOCK_SIZE;
-        int y = 2*ghost.getY_pos()/gg.BLOCK_SIZE;
+        int x = 3*ghost.getX_pos()/gg.BLOCK_SIZE;
+        int y = 3*ghost.getY_pos()/gg.BLOCK_SIZE;
         
-        int pacx = 2*gg.pacman_Coords.getX_pos()/gg.BLOCK_SIZE;
-        int pacy = 2*gg.pacman_Coords.getY_pos()/gg.BLOCK_SIZE;
+        int pacx = 3*gg.pacman_Coords.getX_pos()/gg.BLOCK_SIZE;
+        int pacy = 3*gg.pacman_Coords.getY_pos()/gg.BLOCK_SIZE;
         
         int block_size = gg.BLOCK_SIZE;
         
